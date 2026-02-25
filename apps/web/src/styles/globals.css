@@ -1,0 +1,382 @@
+@import "tailwindcss";
+
+@theme {
+  /* Sci-fantasy color palette */
+  --color-void: #0a0a0f;
+  --color-void-light: #12121a;
+  --color-void-lighter: #1a1a2e;
+  --color-steel: #2a2a3e;
+  --color-steel-light: #3a3a52;
+  --color-ash: #8a8a9e;
+  --color-bone: #c8c8d8;
+  --color-parchment: #e8e8f0;
+
+  /* Accent colors */
+  --color-arcane: #7c3aed;
+  --color-arcane-light: #a78bfa;
+  --color-arcane-dim: #4c1d95;
+  --color-ember: #f59e0b;
+  --color-ember-light: #fbbf24;
+  --color-ember-dim: #92400e;
+  --color-rift: #ef4444;
+  --color-rift-light: #f87171;
+  --color-rift-dim: #991b1b;
+  --color-drift: #06b6d4;
+  --color-drift-light: #22d3ee;
+  --color-drift-dim: #155e75;
+  --color-verdant: #10b981;
+  --color-verdant-light: #34d399;
+  --color-verdant-dim: #064e3b;
+
+  /* Streak colors */
+  --color-spark: #fbbf24;
+  --color-flame: #f97316;
+  --color-blaze: #ef4444;
+  --color-inferno: #dc2626;
+  --color-eternal: #7c3aed;
+
+  /* Semantic */
+  --color-surface: var(--color-void-light);
+  --color-surface-elevated: var(--color-void-lighter);
+  --color-border: var(--color-steel);
+  --color-text-primary: var(--color-parchment);
+  --color-text-secondary: var(--color-ash);
+  --color-text-muted: var(--color-steel-light);
+  --color-xp: var(--color-arcane);
+  --color-hp: var(--color-rift);
+  --color-gold: var(--color-ember);
+  --color-energy: var(--color-drift);
+
+  /* Shadows & glows */
+  --shadow-arcane: 0 0 20px rgba(124, 58, 237, 0.3);
+  --shadow-ember: 0 0 20px rgba(245, 158, 11, 0.3);
+  --shadow-rift: 0 0 20px rgba(239, 68, 68, 0.3);
+
+  /* Fonts */
+  --font-display: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Base styles */
+body {
+  @apply bg-void text-parchment font-body antialiased;
+  min-height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-void);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-steel);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-steel-light);
+}
+
+/* Scanline overlay effect */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+}
+
+/* Glow effect for important elements */
+.glow-arcane {
+  box-shadow: var(--shadow-arcane);
+}
+.glow-ember {
+  box-shadow: var(--shadow-ember);
+}
+.glow-rift {
+  box-shadow: var(--shadow-rift);
+}
+
+/* Hollow corruption effect */
+@keyframes glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(1px, -1px); }
+  60% { transform: translate(-1px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+
+.hollow-glitch {
+  animation: glitch 0.3s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   POLISH & TRANSITIONS
+   ═══════════════════════════════════════════ */
+
+/* Smooth page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+}
+
+/* Focus ring styles — arcane outlines for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-arcane);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-arcane-light);
+  outline-offset: 0;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+}
+
+/* Button press feedback */
+.btn-press {
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+.btn-press:active {
+  transform: scale(0.96);
+}
+
+button,
+[role="button"] {
+  transition: transform 0.1s ease, opacity 0.15s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+button:active:not(:disabled),
+[role="button"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Hover transitions for interactive elements */
+a {
+  transition: color 0.2s ease, opacity 0.15s ease;
+}
+
+/* Card hover lift effect */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(124, 58, 237, 0.1);
+  border-color: var(--color-steel-light);
+}
+
+/* Input focus glow */
+input,
+textarea,
+select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12), 0 0 12px rgba(124, 58, 237, 0.08);
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATION KEYFRAMES
+   ═══════════════════════════════════════════ */
+
+/* Toast slide-in animation */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+}
+
+.toast-enter {
+  animation: toast-in 0.25s ease-out forwards;
+}
+
+.toast-exit {
+  animation: toast-out 0.2s ease-in forwards;
+}
+
+/* Skeleton shimmer animation (gradient sweep) */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-void-light) 25%,
+    var(--color-void-lighter) 37%,
+    var(--color-void-light) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* Pulse glow for loading states */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.15);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Fade-in utility */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+/* Arcane float */
+@keyframes arcane-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.arcane-float {
+  animation: arcane-float 3s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE-SPECIFIC ADJUSTMENTS
+   ═══════════════════════════════════════════ */
+
+/* Ensure minimum touch target sizes (44px) */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Slightly larger tap targets for nav items */
+  nav a,
+  nav button {
+    min-height: 48px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Smooth scrolling for the document */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ═══════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════ */
+
+@media print {
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .hollow-glitch {
+    animation: none !important;
+  }
+
+  .skeleton {
+    animation: none !important;
+  }
+
+  .arcane-float {
+    animation: none !important;
+  }
+
+  .pulse-glow {
+    animation: none !important;
+  }
+}

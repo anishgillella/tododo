@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#7c3aed" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0a0a0f" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="arcaneGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="tGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <!-- Void background -->
+  <rect width="64" height="64" rx="12" fill="#0a0a0f"/>
+  <!-- Arcane glow aura -->
+  <circle cx="32" cy="32" r="28" fill="url(#glow)"/>
+  <!-- Stylized T letterform -->
+  <g filter="url(#arcaneGlow)">
+    <!-- Top bar of T -->
+    <rect x="14" y="14" width="36" height="6" rx="3" fill="url(#tGrad)"/>
+    <!-- Vertical stem of T -->
+    <rect x="27" y="14" width="10" height="36" rx="4" fill="url(#tGrad)"/>
+  </g>
+  <!-- Small star accents -->
+  <circle cx="12" cy="12" r="1.5" fill="#a78bfa" opacity="0.7"/>
+  <circle cx="52" cy="52" r="1" fill="#a78bfa" opacity="0.5"/>
+  <circle cx="54" cy="14" r="1.2" fill="#7c3aed" opacity="0.6"/>
+</svg>
