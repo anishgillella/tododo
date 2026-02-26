@@ -28,6 +28,11 @@ beforeAll(async () => {
 
   await initializeDatabase();
 
+  // Clear seed data created during initialization
+  const { sql: sqlTag } = await import('drizzle-orm');
+  await db.run(sqlTag`DELETE FROM missions`);
+  await db.run(sqlTag`DELETE FROM categories`);
+
   // Build a mini Hono app that mounts only the missions router
   const missionsRouter = (await import('./missions')).default;
   app = new Hono();

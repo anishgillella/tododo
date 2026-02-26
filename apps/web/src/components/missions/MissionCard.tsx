@@ -12,6 +12,11 @@ interface MissionCardProps {
     status: string;
     xpReward: number;
     goldReward: number;
+    category_name?: string | null;
+    category_emoji?: string | null;
+    category_color?: string | null;
+    dueDate?: string | null;
+    due_date?: string | null;
   };
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
@@ -19,6 +24,19 @@ interface MissionCardProps {
 
 const difficultyLabel = (d: number): string =>
   MISSION_DIFFICULTIES[d as MissionDifficulty]?.label ?? 'Unknown';
+
+function formatDueDate(dateStr: string): { label: string; isOverdue: boolean; isToday: boolean } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dateStr + 'T00:00:00');
+  const diffDays = Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return { label: `${Math.abs(diffDays)}d overdue`, isOverdue: true, isToday: false };
+  if (diffDays === 0) return { label: 'Today', isOverdue: false, isToday: true };
+  if (diffDays === 1) return { label: 'Tomorrow', isOverdue: false, isToday: false };
+  if (diffDays <= 7) return { label: `${diffDays}d left`, isOverdue: false, isToday: false };
+  return { label: due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), isOverdue: false, isToday: false };
+}
 
 function DifficultyStars({ difficulty }: { difficulty: number }) {
   return (
@@ -51,10 +69,21 @@ export function MissionCard({ mission, onComplete, onDelete }: MissionCardProps)
     >
       {/* Left content */}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        {/* Difficulty stars + label */}
+        {/* Difficulty stars + label + category badge */}
         <div className="flex items-center gap-2">
           <DifficultyStars difficulty={mission.difficulty} />
           <span className="text-xs text-ash">{difficultyLabel(mission.difficulty)}</span>
+          {mission.category_name && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{
+                backgroundColor: `${mission.category_color ?? '#6B7280'}20`,
+                color: mission.category_color ?? '#6B7280',
+              }}
+            >
+              {mission.category_emoji} {mission.category_name}
+            </span>
+          )}
         </div>
 
         {/* Title */}
@@ -67,7 +96,7 @@ export function MissionCard({ mission, onComplete, onDelete }: MissionCardProps)
           <p className="text-sm leading-relaxed text-ash">{mission.description}</p>
         )}
 
-        {/* Reward badges */}
+        {/* Reward badges + due date */}
         <div className="flex items-center gap-3 pt-1">
           <span className="inline-flex items-center rounded-md bg-arcane/15 px-2 py-0.5 font-mono text-xs font-semibold text-arcane-light">
             +{mission.xpReward} XP
@@ -75,6 +104,24 @@ export function MissionCard({ mission, onComplete, onDelete }: MissionCardProps)
           <span className="inline-flex items-center rounded-md bg-ember/15 px-2 py-0.5 font-mono text-xs font-semibold text-ember-light">
             +{mission.goldReward} G
           </span>
+          {(() => {
+            const raw = mission.dueDate ?? mission.due_date;
+            if (!raw) return null;
+            const { label, isOverdue, isToday } = formatDueDate(raw);
+            return (
+              <span
+                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-xs font-semibold ${
+                  isOverdue
+                    ? 'bg-rift/15 text-rift-light'
+                    : isToday
+                      ? 'bg-verdant/15 text-verdant-light'
+                      : 'bg-drift/15 text-drift-light'
+                }`}
+              >
+                {'\u{1F4C5}'} {label}
+              </span>
+            );
+          })()}
         </div>
       </div>
 

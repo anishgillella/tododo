@@ -10,6 +10,15 @@ export interface Mission {
   xpReward: number;
   goldReward: number;
   narrativeFlavor: string | null;
+  categoryId?: string | null;
+  category_id?: string | null;
+  category_name?: string | null;
+  category_emoji?: string | null;
+  category_color?: string | null;
+  isRecurring?: boolean | number;
+  is_recurring?: number;
+  recurringSourceId?: string | null;
+  recurring_source_id?: string | null;
   carryOverCount: number;
   dueDate: string | null;
   createdAt: string;
@@ -26,10 +35,23 @@ export interface CompleteMissionResponse {
   newLevel?: number;
 }
 
-interface CreateMissionInput {
+export interface CreateMissionInput {
   title: string;
   description?: string;
   difficulty?: number;
+  categoryId?: string;
+  isRecurring?: boolean;
+  dueDate?: string;
+}
+
+export interface ParsedTask {
+  title: string;
+  description?: string;
+  difficulty: number;
+  categoryId: string | null;
+  categoryName?: string;
+  isRecurring: boolean;
+  dueDate?: string;
 }
 
 interface UpdateMissionInput {
@@ -89,6 +111,25 @@ export function useUpdateMission() {
   return useMutation({
     mutationFn: ({ id, ...updates }: UpdateMissionInput) =>
       api.put<{ mission: Mission }>(`/api/missions/${id}`, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
+    },
+  });
+}
+
+export function useParseTasks() {
+  return useMutation({
+    mutationFn: (text: string) =>
+      api.post<{ parsed: ParsedTask[] }>('/api/missions/parse', { text }),
+  });
+}
+
+export function useCreateBatchMissions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (missions: CreateMissionInput[]) =>
+      api.post<{ created: Mission[]; count: number }>('/api/missions/batch', { missions }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['missions'] });
     },

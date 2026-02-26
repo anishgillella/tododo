@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const navItems = [
+  { to: '/world', label: 'World', icon: '\u{1F3F0}' },
   { to: '/command-deck', label: 'Deck', icon: '\u{1F3AF}' },
   { to: '/tavern', label: 'Tavern', icon: '\u{1F37A}' },
   { to: '/training-grounds', label: 'Train', icon: '\u{2694}\u{FE0F}' },

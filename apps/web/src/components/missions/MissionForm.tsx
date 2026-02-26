@@ -2,19 +2,31 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MISSION_DIFFICULTIES } from '@tododo/shared';
 import type { MissionDifficulty } from '@tododo/shared';
+import type { Category } from '../../hooks/useCategories';
 
 interface MissionFormProps {
-  onSubmit: (data: { title: string; description?: string; difficulty: number }) => void;
+  onSubmit: (data: {
+    title: string;
+    description?: string;
+    difficulty: number;
+    categoryId?: string;
+    isRecurring?: boolean;
+    dueDate?: string;
+  }) => void;
   isLoading?: boolean;
+  categories?: Category[];
 }
 
 const difficulties: MissionDifficulty[] = [1, 2, 3, 4, 5];
 
-export function MissionForm({ onSubmit, isLoading = false }: MissionFormProps) {
+export function MissionForm({ onSubmit, isLoading = false, categories = [] }: MissionFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState<MissionDifficulty>(2);
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [dueDate, setDueDate] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +36,18 @@ export function MissionForm({ onSubmit, isLoading = false }: MissionFormProps) {
       title: title.trim(),
       description: description.trim() || undefined,
       difficulty,
+      categoryId: categoryId || undefined,
+      isRecurring: isRecurring || undefined,
+      dueDate: dueDate || undefined,
     });
 
     // Reset form
     setTitle('');
     setDescription('');
     setDifficulty(2);
+    setCategoryId('');
+    setIsRecurring(false);
+    setDueDate('');
     setIsOpen(false);
   };
 
@@ -37,6 +55,9 @@ export function MissionForm({ onSubmit, isLoading = false }: MissionFormProps) {
     setTitle('');
     setDescription('');
     setDifficulty(2);
+    setCategoryId('');
+    setIsRecurring(false);
+    setDueDate('');
     setIsOpen(false);
   };
 
@@ -97,6 +118,28 @@ export function MissionForm({ onSubmit, isLoading = false }: MissionFormProps) {
                 />
               </div>
 
+              {/* Category selector */}
+              {categories.length > 0 && (
+                <div>
+                  <label htmlFor="mission-category" className="mb-1.5 block font-mono text-xs uppercase tracking-wider text-ash">
+                    Category
+                  </label>
+                  <select
+                    id="mission-category"
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className="w-full rounded-lg border border-steel bg-void px-3 py-2 font-body text-sm text-parchment outline-none transition-colors focus:border-arcane"
+                  >
+                    <option value="">Auto-detect (AI)</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.emoji} {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Difficulty selector */}
               <div>
                 <label className="mb-1.5 block font-mono text-xs uppercase tracking-wider text-ash">
@@ -124,6 +167,40 @@ export function MissionForm({ onSubmit, isLoading = false }: MissionFormProps) {
                     {' '}&mdash; {MISSION_DIFFICULTIES[difficulty].timeEstimate}
                   </span>
                 </p>
+              </div>
+
+              {/* Due date */}
+              <div>
+                <label htmlFor="mission-due" className="mb-1.5 block font-mono text-xs uppercase tracking-wider text-ash">
+                  Due Date <span className="text-steel-light">(optional)</span>
+                </label>
+                <input
+                  id="mission-due"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full rounded-lg border border-steel bg-void px-3 py-2 font-mono text-sm text-parchment outline-none transition-colors focus:border-arcane [color-scheme:dark]"
+                />
+              </div>
+
+              {/* Recurring daily toggle */}
+              <div className="flex items-center gap-3">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="h-4 w-4 rounded border-steel bg-void accent-arcane"
+                  />
+                  <span className="font-mono text-xs uppercase tracking-wider text-ash">
+                    Recurring Daily
+                  </span>
+                </label>
+                {isRecurring && (
+                  <span className="font-mono text-xs text-steel-light">
+                    Auto-creates each day
+                  </span>
+                )}
               </div>
 
               {/* Actions */}

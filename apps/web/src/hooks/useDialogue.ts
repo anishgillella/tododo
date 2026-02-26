@@ -26,7 +26,7 @@ export function useDialogueHistory(character: string) {
       const data = await api.get<{ messages: DialogueMessage[] }>(
         `/api/dialogue/history?character=${encodeURIComponent(character)}&limit=50`,
       );
-      return data.messages;
+      return data.messages ?? [];
     },
     enabled: !!character,
   });

@@ -15,12 +15,16 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
-    "@tododo/shared": "*",
+    "@langchain/core": "^1.1.28",
+    "@langchain/openai": "^1.2.10",
     "@libsql/client": "^0.14.0",
+    "@tododo/shared": "*",
     "drizzle-orm": "^0.38.0",
     "hono": "^4.6.0",
+    "langchain": "^1.2.27",
     "nanoid": "^5.0.0",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
