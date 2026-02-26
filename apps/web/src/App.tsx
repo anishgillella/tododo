@@ -8,11 +8,13 @@ import { DailyRecap } from './pages/DailyRecap';
 import { Settings } from './pages/Settings';
 import { Onboarding } from './pages/Onboarding';
 import { Layout } from './components/Layout';
+import { WorldLayout } from './components/layout/WorldLayout';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { useAgent } from './hooks/useAgent';
 
 /**
  * Redirect wrapper: sends fresh agents (level 1, 0 xp, 0 gold) to onboarding.
+ * Non-fresh agents go to the 3D world.
  */
 function HomeRedirect() {
   const { data: agent, isLoading } = useAgent();
@@ -26,7 +28,7 @@ function HomeRedirect() {
     return <Navigate to="/onboarding" replace />;
   }
 
-  return <Navigate to="/command-deck" replace />;
+  return <Navigate to="/world" replace />;
 }
 
 export function App() {
@@ -35,7 +37,10 @@ export function App() {
       {/* Onboarding — outside the Layout shell */}
       <Route path="/onboarding" element={<Onboarding />} />
 
-      {/* Main app routes inside Layout */}
+      {/* 3D Village World */}
+      <Route path="/world" element={<WorldLayout />} />
+
+      {/* Main app routes inside Layout (2D fallback) */}
       <Route element={<Layout />}>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/command-deck" element={<CommandDeck />} />

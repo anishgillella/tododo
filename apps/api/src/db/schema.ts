@@ -35,6 +35,18 @@ export const agents = sqliteTable('agents', {
   overdriveUntil: text('overdrive_until'),
 });
 
+// === Categories ===
+export const categories = sqliteTable('categories', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id),
+  name: text('name').notNull(),
+  emoji: text('emoji').default('📋'),
+  color: text('color').default('#6B7280'),
+  isDefault: integer('is_default', { mode: 'boolean' }).default(false),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: text('created_at'),
+});
+
 // === Missions ===
 export const missions = sqliteTable('missions', {
   id: text('id').primaryKey(),
@@ -46,6 +58,9 @@ export const missions = sqliteTable('missions', {
   xpReward: integer('xp_reward').default(0),
   goldReward: integer('gold_reward').default(0),
   narrativeFlavor: text('narrative_flavor'),
+  categoryId: text('category_id'),
+  isRecurring: integer('is_recurring', { mode: 'boolean' }).default(false),
+  recurringSourceId: text('recurring_source_id'),
   carryOverCount: integer('carry_over_count').default(0),
   dueDate: text('due_date'),
   createdAt: text('created_at'),
@@ -110,4 +125,12 @@ export const gameEvents = sqliteTable('game_events', {
   type: text('type'),
   data: text('data'),
   createdAt: text('created_at'),
+});
+
+// === Agent Memory (LangChain summary memory) ===
+export const agentMemory = sqliteTable('agent_memory', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id),
+  summaryText: text('summary_text'),
+  updatedAt: text('updated_at'),
 });

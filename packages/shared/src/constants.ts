@@ -1,5 +1,20 @@
 import type { DifficultyMode, MissionDifficulty, StreakTier } from './types';
 
+// === Default Categories ===
+export const DEFAULT_CATEGORIES: {
+  name: string;
+  emoji: string;
+  color: string;
+  sortOrder: number;
+}[] = [
+  { name: 'Work', emoji: '💼', color: '#3B82F6', sortOrder: 0 },
+  { name: 'Health', emoji: '💪', color: '#10B981', sortOrder: 1 },
+  { name: 'Personal', emoji: '🏠', color: '#8B5CF6', sortOrder: 2 },
+  { name: 'Learning', emoji: '📚', color: '#F59E0B', sortOrder: 3 },
+  { name: 'Creative', emoji: '🎨', color: '#EC4899', sortOrder: 4 },
+  { name: 'Errands', emoji: '🏃', color: '#6366F1', sortOrder: 5 },
+];
+
 // === Difficulty Mode Multipliers ===
 export const DIFFICULTY_MODES: Record<DifficultyMode, {
   label: string;

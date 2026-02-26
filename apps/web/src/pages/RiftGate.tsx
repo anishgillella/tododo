@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAgent } from '../hooks/useAgent';
 import { useHollowStatus, useBossFight } from '../hooks/useBossFight';
 import type { HollowStatus, BossFightResult } from '../hooks/useBossFight';
+import { useVillageStore } from '../stores/villageStore';
 
 /* ---------- Portal visualization per stage ---------- */
 
@@ -560,18 +561,29 @@ export function RiftGate() {
   const canFight = hollow?.canFight ?? false;
   const stageInfo = getStageMessage(stage, debt);
 
+  const activeOverlay = useVillageStore((s) => s.activeOverlay);
+  const closeOverlay = useVillageStore((s) => s.closeOverlay);
+  const setCombatActive = useVillageStore((s) => s.setCombatActive);
+  const isIn3DOverlay = activeOverlay === '/rift-gate';
+
   const handleFight = useCallback(() => {
+    // If in 3D mode overlay, launch 3D battle arena
+    if (isIn3DOverlay) {
+      closeOverlay();
+      setCombatActive(true);
+      return;
+    }
+    // Otherwise use 2D battle sequence
     setPhase('battling');
     bossFight.mutate(undefined, {
       onSuccess: (result) => {
         setBattleResult(result);
-        // BattleSequence onComplete will transition to result
       },
       onError: () => {
         setPhase('idle');
       },
     });
-  }, [bossFight]);
+  }, [bossFight, isIn3DOverlay, closeOverlay, setCombatActive]);
 
   const handleBattleAnimationComplete = useCallback(() => {
     if (battleResult) {

@@ -39,6 +39,13 @@ beforeAll(async () => {
   listRecaps = schedulerModule.listRecaps;
 
   await initializeDatabase();
+
+  // Clear seed data created during initialization
+  const { sql: sqlTag } = await import('drizzle-orm');
+  await db.run(sqlTag`DELETE FROM missions`);
+  await db.run(sqlTag`DELETE FROM categories`);
+  await db.run(sqlTag`DELETE FROM game_events`);
+  await db.run(sqlTag`DELETE FROM daily_recaps`);
 });
 
 afterAll(() => {

@@ -11,6 +11,7 @@ import gameRouter from './routes/game';
 import settingsRouter from './routes/settings';
 import skillsRouter from './routes/skills';
 import inventoryRouter from './routes/inventory';
+import categoriesRouter from './routes/categories';
 
 const app = new Hono();
 
@@ -42,6 +43,7 @@ app.route('/api/game', gameRouter);
 app.route('/api/settings', settingsRouter);
 app.route('/api/skills', skillsRouter);
 app.route('/api/inventory', inventoryRouter);
+app.route('/api/categories', categoriesRouter);
 
 // === Initialize and Start ===
 const PORT = Number(process.env.PORT) || 3000;

@@ -17,6 +17,31 @@ export type GameEventType =
   | 'skill_purchased'
   | 'day_end';
 
+// === Category ===
+export interface Category {
+  id: string;
+  userId: string;
+  name: string;
+  emoji: string;
+  color: string;
+  isDefault: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+  emoji?: string;
+  color?: string;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
+  emoji?: string;
+  color?: string;
+  sortOrder?: number;
+}
+
 // === Core Models ===
 export interface User {
   id: string;
@@ -66,6 +91,9 @@ export interface Mission {
   xpReward: number;
   goldReward: number;
   narrativeFlavor?: string;
+  categoryId?: string;
+  isRecurring: boolean;
+  recurringSourceId?: string;
   carryOverCount: number;
   dueDate?: string;
   createdAt: string;
@@ -132,6 +160,8 @@ export interface CreateMissionInput {
   title: string;
   description?: string;
   difficulty: MissionDifficulty;
+  categoryId?: string;
+  isRecurring?: boolean;
   dueDate?: string;
 }
 
@@ -140,6 +170,7 @@ export interface UpdateMissionInput {
   description?: string;
   difficulty?: MissionDifficulty;
   status?: MissionStatus;
+  categoryId?: string;
   dueDate?: string;
 }
 
