@@ -7,6 +7,7 @@ import { RiftGate } from './pages/RiftGate';
 import { DailyRecap } from './pages/DailyRecap';
 import { Settings } from './pages/Settings';
 import { Onboarding } from './pages/Onboarding';
+import { InteractiveOnboarding } from './pages/InteractiveOnboarding';
 import { Layout } from './components/Layout';
 import { WorldLayout } from './components/layout/WorldLayout';
 import { LoadingScreen } from './components/ui/LoadingScreen';
@@ -23,9 +24,9 @@ function HomeRedirect() {
     return <LoadingScreen />;
   }
 
-  // Fresh state — user has never interacted
+  // Fresh state — user has never interacted → interactive 3D onboarding
   if (agent && agent.level === 1 && agent.xp === 0 && agent.gold === 0) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/interactive-onboarding" replace />;
   }
 
   return <Navigate to="/world" replace />;
@@ -34,7 +35,10 @@ function HomeRedirect() {
 export function App() {
   return (
     <Routes>
-      {/* Onboarding — outside the Layout shell */}
+      {/* Interactive 3D onboarding — camera flythrough experience */}
+      <Route path="/interactive-onboarding" element={<InteractiveOnboarding />} />
+
+      {/* Legacy onboarding (form-based) */}
       <Route path="/onboarding" element={<Onboarding />} />
 
       {/* 3D Village World */}

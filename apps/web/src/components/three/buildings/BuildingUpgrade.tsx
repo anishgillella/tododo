@@ -1,11 +1,20 @@
 import { useAgent } from '../../../hooks/useAgent';
+import { DecorationPlots } from './DecorationPlots';
 
 /**
- * Visual building upgrades every 10 levels:
+ * Visual building upgrades:
+ *
+ * Level-based (automatic, every 10 levels):
  * - Level 1-9:  base buildings (already rendered)
  * - Level 10-19: stone trim around building bases
  * - Level 20-29: roof lanterns
  * - Level 30+:  arcane runes on walls
+ *
+ * Gold-purchased (per-building via DecorationPlots):
+ * - Tier 1: Banner
+ * - Tier 2: Stained glass windows
+ * - Tier 3: Fountain
+ * - Tier 4: Enchanted roof
  *
  * Positions match the BUILDINGS array in VillageScene.
  */
@@ -25,10 +34,9 @@ export function BuildingUpgrade() {
 
   const tier = Math.floor(level / 10); // 0, 1, 2, 3+
 
-  if (tier < 1) return null;
-
   return (
     <group>
+      {/* Level-based automatic upgrades */}
       {/* Tier 1 (level 10+): Stone trim foundations */}
       {tier >= 1 && BUILDING_POSITIONS.map((pos, i) => (
         <mesh key={`trim-${i}`} position={[pos[0], 0.05, pos[2]]}>
@@ -67,6 +75,9 @@ export function BuildingUpgrade() {
           />
         </mesh>
       ))}
+
+      {/* Gold-purchased per-building decorations */}
+      <DecorationPlots />
     </group>
   );
 }
