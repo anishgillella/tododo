@@ -103,10 +103,10 @@ export function Onboarding() {
         payload.openrouterApiKey = apiKey.trim();
       }
       await api.put('/api/settings', payload);
-      navigate('/command-deck', { replace: true });
+      navigate('/world', { replace: true });
     } catch {
       // Navigate anyway — settings can be configured later
-      navigate('/command-deck', { replace: true });
+      navigate('/world', { replace: true });
     } finally {
       setIsSubmitting(false);
     }
