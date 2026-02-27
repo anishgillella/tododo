@@ -1,8 +1,13 @@
 import { Html } from '@react-three/drei';
 import { useAgent } from '../../hooks/useAgent';
+import { useAudioStore } from '../../stores/audioStore';
+import { useVillageStore } from '../../stores/villageStore';
 
 export function VillageHud() {
   const { data: agent } = useAgent();
+  const toggleMute = useAudioStore((s) => s.toggleMute);
+  const isMuted = useAudioStore((s) => s.isMuted);
+  const setShowHowToPlay = useVillageStore((s) => s.setShowHowToPlay);
 
   if (!agent) return null;
 
@@ -13,6 +18,24 @@ export function VillageHud() {
       fullscreen
       style={{ pointerEvents: 'none' }}
     >
+      {/* Top-right buttons */}
+      <div className="pointer-events-auto absolute top-3 right-3 flex gap-2">
+        <button
+          onClick={() => setShowHowToPlay(true)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-steel bg-void-light/90 text-ash backdrop-blur-sm hover:border-arcane hover:text-arcane-light transition-colors"
+          title="How to Play"
+        >
+          <span className="font-mono text-sm">?</span>
+        </button>
+        <button
+          onClick={toggleMute}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-steel bg-void-light/90 text-ash backdrop-blur-sm hover:border-arcane hover:text-arcane-light transition-colors"
+          title={isMuted ? 'Unmute' : 'Mute'}
+        >
+          <span className="text-sm">{isMuted ? '\u{1F507}' : '\u{1F509}'}</span>
+        </button>
+      </div>
+
       <div className="pointer-events-none absolute top-3 left-3 flex flex-col gap-1.5 rounded-xl border border-steel bg-void-light/90 p-3 backdrop-blur-sm">
         <div className="font-display text-xs tracking-wider text-arcane-light uppercase">
           Lv.{agent.level} Drifter

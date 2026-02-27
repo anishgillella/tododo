@@ -11,6 +11,7 @@ export function MiraNpc() {
       headColor="#d4a574"
       glowColor="#10b981"
       name="Mira"
+      characterKey="mira"
       quote="The fire within you still burns, dear Drifter. That is all that matters."
       onClick={() => openOverlay('/tavern')}
     >

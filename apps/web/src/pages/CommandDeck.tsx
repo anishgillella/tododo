@@ -5,6 +5,7 @@ import { useCategories } from '../hooks/useCategories';
 import { useAgent } from '../hooks/useAgent';
 import { useTriggerEndOfDay } from '../hooks/useRecap';
 import type { EndOfDayReport } from '../hooks/useRecap';
+import { useHabits, useCreateHabit, useCompleteHabit, useDeleteHabit } from '../hooks/useHabits';
 import { useMissionStore } from '../stores/missionStore';
 import { MiniHud } from '../components/hud/MiniHud';
 import { MissionForm } from '../components/missions/MissionForm';
@@ -12,6 +13,8 @@ import { BulkMissionInput } from '../components/missions/BulkMissionInput';
 import { CategorySection } from '../components/missions/CategorySection';
 import { MissionList } from '../components/missions/MissionList';
 import { CompletionToast } from '../components/missions/CompletionToast';
+import { HabitCard } from '../components/missions/HabitCard';
+import { HabitForm } from '../components/missions/HabitForm';
 
 export function CommandDeck() {
   const { data: agent, isLoading: agentLoading } = useAgent();
@@ -21,6 +24,12 @@ export function CommandDeck() {
   const completeMission = useCompleteMission();
   const deleteMission = useDeleteMission();
 
+  const { data: habits = [] } = useHabits();
+  const createHabit = useCreateHabit();
+  const completeHabit = useCompleteHabit();
+  const deleteHabit = useDeleteHabit();
+
+  const [activeTab, setActiveTab] = useState<'tasks' | 'habits'>('tasks');
   const [inputMode, setInputMode] = useState<'single' | 'bulk'>('single');
   const [showEndDayConfirm, setShowEndDayConfirm] = useState(false);
   const [endDayReport, setEndDayReport] = useState<EndOfDayReport | null>(null);
@@ -123,6 +132,73 @@ export function CommandDeck() {
         <MiniHud agent={agent ?? null} isLoading={agentLoading} />
       </div>
 
+      {/* Tasks / Habits tab switcher */}
+      <div className="mb-4 flex gap-1 rounded-lg border border-steel bg-void-light p-0.5">
+        <button
+          onClick={() => setActiveTab('tasks')}
+          className={`flex-1 rounded-md px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-all ${
+            activeTab === 'tasks'
+              ? 'bg-arcane/15 text-arcane-light'
+              : 'text-steel-light hover:text-ash'
+          }`}
+        >
+          Tasks
+        </button>
+        <button
+          onClick={() => setActiveTab('habits')}
+          className={`flex-1 rounded-md px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-all ${
+            activeTab === 'habits'
+              ? 'bg-arcane/15 text-arcane-light'
+              : 'text-steel-light hover:text-ash'
+          }`}
+        >
+          Habits {habits.length > 0 && `(${habits.length})`}
+        </button>
+      </div>
+
+      {activeTab === 'habits' ? (
+        /* ─── Habits Tab ─── */
+        <div className="flex flex-1 flex-col">
+          <div className="mb-4">
+            <HabitForm
+              onSubmit={(data) => createHabit.mutate(data)}
+              isLoading={createHabit.isPending}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <AnimatePresence>
+              {habits.map((habit) => (
+                <HabitCard
+                  key={habit.id}
+                  habit={habit}
+                  onComplete={(id) => {
+                    completeHabit.mutate(id, {
+                      onSuccess: (result) => {
+                        setLastCompletion({
+                          missionId: id,
+                          xpGained: result.xpGained,
+                          goldGained: result.goldGained,
+                          wasCrit: false,
+                          comboBonus: 0,
+                          leveledUp: false,
+                        });
+                      },
+                    });
+                  }}
+                  onDelete={(id) => deleteHabit.mutate(id)}
+                />
+              ))}
+            </AnimatePresence>
+            {habits.length === 0 && (
+              <p className="py-8 text-center font-mono text-xs text-steel-light">
+                No habits yet. Add a daily habit above.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : (
+      /* ─── Tasks Tab ─── */
+      <>
       {/* Mission input — toggle between single and bulk */}
       <div className="mb-4">
         <div className="mb-2 flex items-center gap-3">
@@ -222,6 +298,8 @@ export function CommandDeck() {
           />
         )}
       </section>
+      </>
+      )}
 
       {/* End Day */}
       {!missionsLoading && (

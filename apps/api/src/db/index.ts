@@ -92,6 +92,12 @@ export async function initializeDatabase(): Promise<void> {
     'ALTER TABLE missions ADD COLUMN category_id TEXT',
     'ALTER TABLE missions ADD COLUMN is_recurring INTEGER DEFAULT 0',
     'ALTER TABLE missions ADD COLUMN recurring_source_id TEXT',
+    'ALTER TABLE missions ADD COLUMN is_habit INTEGER DEFAULT 0',
+    'ALTER TABLE missions ADD COLUMN habit_streak INTEGER DEFAULT 0',
+    'ALTER TABLE missions ADD COLUMN last_habit_completion TEXT',
+    'ALTER TABLE agent_memory ADD COLUMN character TEXT',
+    'ALTER TABLE agent_memory ADD COLUMN message_count INTEGER DEFAULT 0',
+    'ALTER TABLE agents ADD COLUMN building_upgrades TEXT DEFAULT \'{}\'',
   ];
   for (const stmt of alterColumns) {
     try { await db.run(sql.raw(stmt)); } catch { /* column already exists */ }

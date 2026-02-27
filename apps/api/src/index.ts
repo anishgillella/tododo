@@ -12,6 +12,9 @@ import settingsRouter from './routes/settings';
 import skillsRouter from './routes/skills';
 import inventoryRouter from './routes/inventory';
 import categoriesRouter from './routes/categories';
+import habitsRouter from './routes/habits';
+import npcBubblesRouter from './routes/npcBubbles';
+import buildingsRouter from './routes/buildings';
 
 const app = new Hono();
 
@@ -44,6 +47,9 @@ app.route('/api/settings', settingsRouter);
 app.route('/api/skills', skillsRouter);
 app.route('/api/inventory', inventoryRouter);
 app.route('/api/categories', categoriesRouter);
+app.route('/api/habits', habitsRouter);
+app.route('/api/npc-bubbles', npcBubblesRouter);
+app.route('/api/buildings', buildingsRouter);
 
 // === Initialize and Start ===
 const PORT = Number(process.env.PORT) || 3000;

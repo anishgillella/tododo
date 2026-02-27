@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import type { Group } from 'three';
 import { NpcBubble } from './NpcBubble';
+import { usePlayerStore } from '../../../stores/playerStore';
 
 interface NpcCharacterProps {
   position: [number, number, number];
@@ -10,6 +12,7 @@ interface NpcCharacterProps {
   glowColor?: string;
   name: string;
   quote: string;
+  characterKey?: string;
   onClick?: () => void;
   children?: React.ReactNode;
 }
@@ -21,11 +24,15 @@ export function NpcCharacter({
   glowColor,
   name,
   quote,
+  characterKey,
   onClick,
   children,
 }: NpcCharacterProps) {
   const groupRef = useRef<Group>(null);
   const [hovered, setHovered] = useState(false);
+  const nearbyNpc = usePlayerStore((s) => s.nearbyNpc);
+
+  const isNearby = nearbyNpc === name;
 
   // Idle bob
   useFrame((state) => {
@@ -84,8 +91,8 @@ export function NpcCharacter({
         </>
       )}
 
-      {/* Glow when hovered */}
-      {glowColor && hovered && (
+      {/* Glow when hovered or nearby */}
+      {glowColor && (hovered || isNearby) && (
         <pointLight
           position={[0, 1.5, 0]}
           color={glowColor}
@@ -94,8 +101,19 @@ export function NpcCharacter({
         />
       )}
 
-      {/* Speech bubble */}
-      <NpcBubble name={name} text={quote} visible={hovered} />
+      {/* Speech bubble — shows on hover or proximity */}
+      <NpcBubble name={name} text={quote} visible={hovered || isNearby} characterKey={characterKey} />
+
+      {/* "Press E to talk" prompt on proximity */}
+      {isNearby && (
+        <Html position={[0, 0.3, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+          <div className="rounded-md bg-void-light/90 px-2 py-1 border border-arcane/40 backdrop-blur-sm">
+            <span className="font-mono text-[10px] text-arcane-light tracking-wider">
+              Press E to talk
+            </span>
+          </div>
+        </Html>
+      )}
     </group>
   );
 }

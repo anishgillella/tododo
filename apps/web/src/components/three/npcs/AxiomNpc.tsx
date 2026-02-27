@@ -20,6 +20,7 @@ export function AxiomNpc() {
       bodyColor="#06b6d4"
       glowColor="#06b6d4"
       name="Axiom"
+      characterKey="axiom"
       quote="Ward sweep complete. Your motivation levels remain... measurable."
       onClick={() => openOverlay('/tavern')}
     >

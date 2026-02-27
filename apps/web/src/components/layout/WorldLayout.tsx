@@ -1,6 +1,11 @@
 import { lazy, Suspense, useCallback } from 'react';
 import { PageOverlay } from './PageOverlay';
 import { useVillageStore } from '../../stores/villageStore';
+import { useRealWeather } from '../../hooks/useRealWeather';
+import { useAudio } from '../../hooks/useAudio';
+import { useProximityAudio } from '../../hooks/useProximityAudio';
+import { useNpcBubbles } from '../../hooks/useNpcBubbles';
+import { HowToPlayModal } from '../ui/HowToPlayModal';
 import type { BossFightResult } from '../../hooks/useBossFight';
 
 const VillageCanvas = lazy(() =>
@@ -14,6 +19,17 @@ const BattleArena = lazy(() =>
 export function WorldLayout() {
   const combatActive = useVillageStore((s) => s.combatActive);
   const setCombatActive = useVillageStore((s) => s.setCombatActive);
+  const showHowToPlay = useVillageStore((s) => s.showHowToPlay);
+
+  // Initialize real-world weather + time tracking
+  useRealWeather();
+
+  // Initialize audio system
+  useAudio();
+  useProximityAudio();
+
+  // Proactive NPC bubbles
+  useNpcBubbles();
 
   const handleBattleComplete = useCallback((_result: BossFightResult) => {
     setCombatActive(false);
@@ -55,6 +71,9 @@ export function WorldLayout() {
 
       {/* Overlay system — slides up over canvas */}
       <PageOverlay />
+
+      {/* How to Play modal */}
+      {showHowToPlay && <HowToPlayModal />}
     </div>
   );
 }
