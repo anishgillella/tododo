@@ -33,6 +33,7 @@ export const agents = sqliteTable('agents', {
   consecutiveFailDays: integer('consecutive_fail_days').default(0),
   comboCount: integer('combo_count').default(0),
   overdriveUntil: text('overdrive_until'),
+  buildingUpgrades: text('building_upgrades').default('{}'),
 });
 
 // === Categories ===
@@ -63,6 +64,9 @@ export const missions = sqliteTable('missions', {
   recurringSourceId: text('recurring_source_id'),
   carryOverCount: integer('carry_over_count').default(0),
   dueDate: text('due_date'),
+  isHabit: integer('is_habit', { mode: 'boolean' }).default(false),
+  habitStreak: integer('habit_streak').default(0),
+  lastHabitCompletion: text('last_habit_completion'),
   createdAt: text('created_at'),
   completedAt: text('completed_at'),
 });
@@ -131,6 +135,8 @@ export const gameEvents = sqliteTable('game_events', {
 export const agentMemory = sqliteTable('agent_memory', {
   id: text('id').primaryKey(),
   userId: text('user_id').references(() => users.id),
+  character: text('character'),
   summaryText: text('summary_text'),
+  messageCount: integer('message_count').default(0),
   updatedAt: text('updated_at'),
 });

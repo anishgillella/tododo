@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSettings, useUpdateSettings } from '../hooks/useSettings';
+import { useAudioStore } from '../stores/audioStore';
 
 const DIFFICULTY_MODES = [
   {
@@ -264,6 +265,9 @@ export function Settings() {
           </div>
         </section>
 
+        {/* ─── Sound ─── */}
+        <SoundSettings />
+
         {/* ─── About ─── */}
         <section>
           <SectionHeader title="About" mono="// System manifest" />
@@ -314,5 +318,58 @@ export function Settings() {
         )}
       </AnimatePresence>
     </motion.div>
+  );
+}
+
+function VolumeSlider({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-16 font-mono text-xs uppercase tracking-wider text-ash">{label}</span>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="flex-1 accent-arcane"
+      />
+      <span className="w-8 text-right font-mono text-xs text-steel-light">{Math.round(value * 100)}%</span>
+    </div>
+  );
+}
+
+function SoundSettings() {
+  const masterVolume = useAudioStore((s) => s.masterVolume);
+  const musicVolume = useAudioStore((s) => s.musicVolume);
+  const sfxVolume = useAudioStore((s) => s.sfxVolume);
+  const isMuted = useAudioStore((s) => s.isMuted);
+  const setMasterVolume = useAudioStore((s) => s.setMasterVolume);
+  const setMusicVolume = useAudioStore((s) => s.setMusicVolume);
+  const setSfxVolume = useAudioStore((s) => s.setSfxVolume);
+  const toggleMute = useAudioStore((s) => s.toggleMute);
+
+  return (
+    <section>
+      <SectionHeader title="Sound" mono="// Audio configuration" />
+      <div className="rounded-xl border border-steel bg-void-light p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-xs uppercase tracking-wider text-ash">Audio</span>
+          <button
+            onClick={toggleMute}
+            className={`rounded-lg border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+              isMuted
+                ? 'border-rift/30 bg-rift/10 text-rift-light'
+                : 'border-verdant/30 bg-verdant/10 text-verdant-light'
+            }`}
+          >
+            {isMuted ? 'Muted' : 'On'}
+          </button>
+        </div>
+        <VolumeSlider label="Master" value={masterVolume} onChange={setMasterVolume} />
+        <VolumeSlider label="Music" value={musicVolume} onChange={setMusicVolume} />
+        <VolumeSlider label="SFX" value={sfxVolume} onChange={setSfxVolume} />
+      </div>
+    </section>
   );
 }

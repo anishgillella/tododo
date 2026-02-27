@@ -1,7 +1,7 @@
 /**
  * AI Service — OpenRouter API integration for NPC dialogue and recap narratives.
  *
- * Uses the free Llama 3.1 8B Instruct model via OpenRouter for dialogue generation.
+ * Uses GPT-4o-mini via OpenRouter for dialogue generation.
  * Falls back to hardcoded responses if the API call fails or no API key is set.
  */
 
@@ -15,7 +15,7 @@ import {
 // ── Constants ────────────────────────────────────────────────────────
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DIALOGUE_MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
+const DIALOGUE_MODEL = 'openai/gpt-4o-mini';
 const MAX_TOKENS = 300;
 const TEMPERATURE = 0.8;
 const MAX_HISTORY = 10;
@@ -49,6 +49,7 @@ export async function generateDialogue(
   gameState: GameStateForPrompt,
   apiKey: string,
   recentHistory?: ChatMessage[],
+  memory?: string,
 ): Promise<string> {
   try {
     // Build the game state text block
@@ -73,7 +74,7 @@ export async function generateDialogue(
     );
 
     // Build the system prompt
-    const systemPrompt = getCharacterPrompt(character, gameStateText);
+    const systemPrompt = getCharacterPrompt(character, gameStateText, memory);
 
     // Build messages array
     const messages: ChatMessage[] = [
@@ -149,7 +150,7 @@ interface RecapResult {
 
 const FALLBACK_RECAP: RecapResult = {
   narrative:
-    'The Drifter stood at the viewport, watching stars drift past in silence. Another day logged in the station\'s records. The missions -- some completed, some left to gather dust -- told a story that only the Drifter truly understood. The Hollow pulsed faintly in the distance, a reminder that the work was never truly done.',
+    'The Drifter stood at the edge of Drifthollow, gazing across the village rooftops as firelight flickered in the tavern windows. Another day etched into the Guild Hall\'s ledger. The missions -- some completed, some left to gather dust -- told a story that only the Drifter truly understood. The Hollow pulsed faintly beyond the Rift Gate, a reminder that the work was never truly done.',
   axiomCommentary:
     'Day cycle complete. Performance metrics have been logged. I will refrain from editorial comment. For now.',
   kaelReaction:
@@ -170,7 +171,7 @@ export async function generateRecapNarrative(
   apiKey: string,
 ): Promise<RecapResult> {
   try {
-    const prompt = `You are the narrator of Tododo, a gamified productivity app set on a space station at the edge of an arcane nebula. Write a dramatic recap of the Drifter's day.
+    const prompt = `You are the narrator of Tododo, a gamified productivity app set in the fantasy village of Drifthollow, perched at the edge of a magical rift. Write a dramatic recap of the Drifter's day.
 
 Day Results:
 - Missions completed: ${dayResults.missionsCompleted}

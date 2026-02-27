@@ -1,11 +1,13 @@
+import { useMemo } from 'react';
 import { Ground } from './Ground';
 import { Building } from './Building';
 import { AmbientParticles } from './AmbientParticles';
 import { RiftGateBuilding } from './RiftGateBuilding';
 import { Tree } from './Tree';
 import { VillageHud } from './VillageHud';
-import { PlayerCharacter } from './character/PlayerCharacter';
+import { MovablePlayer } from './character/MovablePlayer';
 import { LevelUpEffect } from './character/LevelUpEffect';
+import { GroundClickTarget } from './GroundClickTarget';
 import { AxiomNpc } from './npcs/AxiomNpc';
 import { KaelNpc } from './npcs/KaelNpc';
 import { MiraNpc } from './npcs/MiraNpc';
@@ -21,6 +23,7 @@ import { VillageDecay } from './environment/VillageDecay';
 import { VillageFlourish } from './environment/VillageFlourish';
 import { BuildingUpgrade } from './buildings/BuildingUpgrade';
 import { QuestMarkers } from './ui/QuestMarkers';
+import { useWeatherStore } from '../../stores/weatherStore';
 
 const BUILDINGS = [
   {
@@ -78,17 +81,35 @@ const TREES = [
   [9, 0, -10],
 ] as [number, number, number][];
 
+const TIME_LIGHT_SETTINGS: Record<string, { intensity: number; color: string; ambientIntensity: number }> = {
+  morning: { intensity: 0.9, color: '#ffcc88', ambientIntensity: 0.35 },
+  midday:  { intensity: 1.2, color: '#ffffff', ambientIntensity: 0.4 },
+  evening: { intensity: 0.8, color: '#ff8844', ambientIntensity: 0.3 },
+  night:   { intensity: 0.3, color: '#4466aa', ambientIntensity: 0.2 },
+};
+
 export function VillageScene() {
+  const timeOfDay = useWeatherStore((s) => s.timeOfDay);
+  const lightSettings = TIME_LIGHT_SETTINGS[timeOfDay] ?? TIME_LIGHT_SETTINGS.midday;
+
+  const buildingBounds = useMemo(() => BUILDINGS.map((b) => ({
+    position: b.position,
+    size: b.size ?? [2, 2.5, 2] as [number, number, number],
+    route: b.route,
+    name: b.name,
+  })), []);
+
   return (
     <>
-      {/* Sky dome — changes color based on hollow stage + streak */}
+      {/* Sky dome — changes color based on hollow stage + streak + time */}
       <SkySystem />
 
-      {/* Lighting */}
-      <ambientLight intensity={0.4} />
+      {/* Lighting — adjusted by time of day */}
+      <ambientLight intensity={lightSettings.ambientIntensity} />
       <directionalLight
         position={[10, 15, 10]}
-        intensity={1.2}
+        intensity={lightSettings.intensity}
+        color={lightSettings.color}
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
@@ -130,8 +151,11 @@ export function VillageScene() {
         <Tree key={i} position={pos} />
       ))}
 
-      {/* Player character */}
-      <PlayerCharacter position={[0, 0, 3]} />
+      {/* Click-to-move ground target */}
+      <GroundClickTarget />
+
+      {/* Player character — movable via WASD/click */}
+      <MovablePlayer buildingBounds={buildingBounds} />
 
       {/* NPCs */}
       <AxiomNpc />

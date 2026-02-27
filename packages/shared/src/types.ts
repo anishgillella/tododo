@@ -96,6 +96,9 @@ export interface Mission {
   recurringSourceId?: string;
   carryOverCount: number;
   dueDate?: string;
+  isHabit: boolean;
+  habitStreak: number;
+  lastHabitCompletion?: string;
   createdAt: string;
   completedAt?: string;
 }

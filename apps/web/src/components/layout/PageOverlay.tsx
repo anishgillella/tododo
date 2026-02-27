@@ -20,6 +20,16 @@ const PAGE_COMPONENTS: Record<Exclude<OverlayRoute, null>, React.FC> = {
   '/settings': Settings,
 };
 
+const BUILDING_COLORS: Record<string, string> = {
+  '/command-deck': '#7c3aed',
+  '/tavern': '#f59e0b',
+  '/training-grounds': '#10b981',
+  '/forge': '#f59e0b',
+  '/rift-gate': '#ef4444',
+  '/daily-recap': '#06b6d4',
+  '/settings': '#3a3a52',
+};
+
 export function PageOverlay() {
   const activeOverlay = useVillageStore((s) => s.activeOverlay);
   const closeOverlay = useVillageStore((s) => s.closeOverlay);
@@ -37,6 +47,7 @@ export function PageOverlay() {
   }, [activeOverlay, closeOverlay]);
 
   const PageComponent = activeOverlay ? PAGE_COMPONENTS[activeOverlay] : null;
+  const buildingColor = activeOverlay ? BUILDING_COLORS[activeOverlay] ?? '#7c3aed' : '#7c3aed';
 
   return (
     <AnimatePresence>
@@ -44,11 +55,18 @@ export function PageOverlay() {
         <motion.div
           ref={overlayRef}
           className="page-overlay"
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          initial={{ y: '100%', scale: 0.95, opacity: 0.8 }}
+          animate={{ y: 0, scale: 1, opacity: 1 }}
+          exit={{ y: '100%', scale: 0.95, opacity: 0.8 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 250 }}
         >
+          {/* Building-themed top border gradient */}
+          <div
+            className="h-1 w-full"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${buildingColor}, transparent)`,
+            }}
+          />
           <OverlayHeader />
           <div className="flex-1 overflow-y-auto">
             <PageComponent />

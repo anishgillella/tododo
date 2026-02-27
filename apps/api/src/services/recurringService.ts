@@ -26,6 +26,7 @@ export async function spawnRecurringMissions(userId: string): Promise<void> {
     FROM missions
     WHERE user_id = ${userId}
       AND is_recurring = 1
+      AND is_habit = 0
       AND status = 'active'
   `);
 

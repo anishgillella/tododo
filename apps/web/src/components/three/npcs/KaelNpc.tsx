@@ -11,6 +11,7 @@ export function KaelNpc() {
       headColor="#d4a574"
       glowColor="#f97316"
       name="Kael"
+      characterKey="kael"
       quote="Oh, you're here? I already cleared three quests today. But sure, take your time."
       onClick={() => openOverlay('/tavern')}
     >

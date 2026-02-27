@@ -9,6 +9,7 @@ import {
   FALLBACK_RESPONSES,
   type GameStateForPrompt,
 } from '../prompts/characters';
+import { incrementMessageCount, shouldSummarize, getMemory, summarizeAndStore } from '../services/memoryService';
 
 const app = new Hono();
 
@@ -148,6 +149,9 @@ app.post('/', async (c) => {
     recentEvents,
   };
 
+  // Fetch NPC memory for this character
+  const memory = await getMemory(DEFAULT_USER_ID, character);
+
   // Generate AI response
   const response = await generateDialogue(
     character,
@@ -155,6 +159,7 @@ app.post('/', async (c) => {
     gameState,
     apiKey,
     recentHistory,
+    memory ?? undefined,
   );
 
   // Save user message and assistant response to dialogue history
@@ -176,6 +181,16 @@ app.post('/', async (c) => {
     content: response,
     createdAt: now,
   });
+
+  // Increment message count and check if summarization needed
+  // Count both user + assistant as 1 "exchange"
+  const msgCount = await incrementMessageCount(DEFAULT_USER_ID, character);
+  if (shouldSummarize(msgCount)) {
+    // Run summarization in background (don't block response)
+    summarizeAndStore(DEFAULT_USER_ID, character, apiKey).catch((err) =>
+      console.error('[dialogue] Background summarization error:', err),
+    );
+  }
 
   return c.json({
     character,

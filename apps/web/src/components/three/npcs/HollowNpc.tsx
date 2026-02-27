@@ -24,7 +24,8 @@ export function HollowNpc() {
       position={[0, 0, -10]}
       bodyColor="#1a0a0a"
       glowColor="#ef4444"
-      name="The Hollow"
+      name="Hollow"
+      characterKey="hollow"
       quote="Each promise you break feeds me... Can you feel it, Drifter?"
       onClick={() => openOverlay('/rift-gate')}
     >

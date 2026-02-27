@@ -151,17 +151,29 @@ ${eventList}
 export function getCharacterPrompt(
   character: string,
   gameState: string,
+  memory?: string,
 ): string {
   const charDef = CHARACTER_DEFINITIONS[character];
   if (!charDef) {
     throw new Error(`Unknown character: ${character}`);
   }
 
-  return `${WORLD_CONTEXT}
+  let prompt = `${WORLD_CONTEXT}
 
 ${charDef}
 
 The following is the current state of the Drifter you are interacting with. Use this to inform your responses -- reference specific stats, missions, or events when relevant. Do not repeat the raw numbers; weave them naturally into your dialogue.
 
 ${gameState}`;
+
+  if (memory) {
+    prompt += `
+
+=== CONVERSATION MEMORY ===
+The following is a summary of your previous conversations with this Drifter. Use it to maintain continuity and reference past interactions naturally.
+${memory}
+=== END MEMORY ===`;
+  }
+
+  return prompt;
 }
