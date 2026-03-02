@@ -19,6 +19,7 @@ import {
   getHollowStage,
   type HollowStage,
 } from '@tododo/shared';
+import { getActiveEffects } from './gameEngine';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -184,8 +185,13 @@ export async function initiateBossFight(userId: string): Promise<BossFightResult
   // Calculate Hollow's strength
   const hollowStrength = calculateHollowStrength(debt, consecutiveFailDays);
 
-  // Calculate win chance
-  const winChance = calculateBossFightWinChance(level, hp, maxHp, hollowStrength);
+  // Get active effects for boss_win_chance_percent
+  const effects = await getActiveEffects(agent.id);
+  const bossWinBonus = effects.boss_win_chance_percent / 100;
+
+  // Calculate win chance with skill bonus
+  const baseWinChance = calculateBossFightWinChance(level, hp, maxHp, hollowStrength);
+  const winChance = Math.min(0.9, baseWinChance + bossWinBonus);
 
   // Roll the fight
   const won = Math.random() < winChance;

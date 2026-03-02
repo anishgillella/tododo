@@ -1,47 +1,35 @@
-import { lazy, Suspense, useCallback } from 'react';
+import { lazy, Suspense } from 'react';
 import { PageOverlay } from './PageOverlay';
 import { useVillageStore } from '../../stores/villageStore';
+import { useCombatStore } from '../../stores/combatStore';
 import { useRealWeather } from '../../hooks/useRealWeather';
 import { useAudio } from '../../hooks/useAudio';
-import { useProximityAudio } from '../../hooks/useProximityAudio';
 import { useNpcBubbles } from '../../hooks/useNpcBubbles';
+import { useGameBridge } from '../../hooks/useGameBridge';
 import { HowToPlayModal } from '../ui/HowToPlayModal';
-import type { BossFightResult } from '../../hooks/useBossFight';
+import { VillageHud } from '../game/VillageHud';
+import CombatHUD from '../combat/CombatHUD';
 
-const VillageCanvas = lazy(() =>
-  import('../three/VillageCanvas').then((m) => ({ default: m.VillageCanvas }))
-);
-
-const BattleArena = lazy(() =>
-  import('../three/combat/BattleArena').then((m) => ({ default: m.BattleArena }))
+const GameCanvas = lazy(() =>
+  import('../game/GameCanvas').then((m) => ({ default: m.GameCanvas }))
 );
 
 export function WorldLayout() {
   const combatActive = useVillageStore((s) => s.combatActive);
-  const setCombatActive = useVillageStore((s) => s.setCombatActive);
   const showHowToPlay = useVillageStore((s) => s.showHowToPlay);
+  const activeSession = useCombatStore((s) => s.activeSession);
 
-  // Initialize real-world weather + time tracking
+  // Initialize systems
   useRealWeather();
-
-  // Initialize audio system
   useAudio();
-  useProximityAudio();
-
-  // Proactive NPC bubbles
   useNpcBubbles();
+  useGameBridge();
 
-  const handleBattleComplete = useCallback((_result: BossFightResult) => {
-    setCombatActive(false);
-  }, [setCombatActive]);
-
-  const handleBattleCancel = useCallback(() => {
-    setCombatActive(false);
-  }, [setCombatActive]);
+  const showBattleHud = combatActive || !!activeSession;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-void">
-      {/* 3D Canvas — always rendered behind */}
+      {/* 2D Phaser Canvas */}
       <Suspense
         fallback={
           <div className="flex h-full w-full items-center justify-center">
@@ -51,25 +39,16 @@ export function WorldLayout() {
           </div>
         }
       >
-        <VillageCanvas />
+        <GameCanvas />
       </Suspense>
 
-      {/* 3D Battle Arena — overlays canvas when combat is active */}
-      {combatActive && (
-        <Suspense
-          fallback={
-            <div className="absolute inset-0 z-40 flex items-center justify-center bg-void">
-              <div className="font-display text-sm tracking-wider text-rift-light animate-pulse">
-                Entering the Rift...
-              </div>
-            </div>
-          }
-        >
-          <BattleArena onComplete={handleBattleComplete} onCancel={handleBattleCancel} />
-        </Suspense>
-      )}
+      {/* Combat HUD overlay */}
+      {showBattleHud && <CombatHUD />}
 
-      {/* Overlay system — slides up over canvas */}
+      {/* Fixed screen HUD */}
+      <VillageHud />
+
+      {/* Overlay system */}
       <PageOverlay />
 
       {/* How to Play modal */}

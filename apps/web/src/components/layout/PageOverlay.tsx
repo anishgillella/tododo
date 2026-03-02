@@ -8,6 +8,8 @@ import { TrainingGrounds } from '../../pages/TrainingGrounds';
 import { Forge } from '../../pages/Forge';
 import { RiftGate } from '../../pages/RiftGate';
 import { DailyRecap } from '../../pages/DailyRecap';
+import Bestiary from '../../pages/Bestiary';
+import Achievements from '../../pages/Achievements';
 import { Settings } from '../../pages/Settings';
 
 const PAGE_COMPONENTS: Record<Exclude<OverlayRoute, null>, React.FC> = {
@@ -17,6 +19,8 @@ const PAGE_COMPONENTS: Record<Exclude<OverlayRoute, null>, React.FC> = {
   '/forge': Forge,
   '/rift-gate': RiftGate,
   '/daily-recap': DailyRecap,
+  '/bestiary': Bestiary,
+  '/achievements': Achievements,
   '/settings': Settings,
 };
 
@@ -27,6 +31,8 @@ const BUILDING_COLORS: Record<string, string> = {
   '/forge': '#f59e0b',
   '/rift-gate': '#ef4444',
   '/daily-recap': '#06b6d4',
+  '/bestiary': '#8B5CF6',
+  '/achievements': '#F59E0B',
   '/settings': '#3a3a52',
 };
 

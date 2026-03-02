@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, or, sql, like } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../db/index';
 import { missions, categories } from '../db/schema';
@@ -81,6 +81,75 @@ app.get('/', async (c) => {
   const enriched = await Promise.all(filtered.map(enrichWithCategory));
 
   return c.json({ missions: enriched });
+});
+
+// GET /api/missions/by-date — list missions for a specific date
+app.get('/by-date', async (c) => {
+  const dateParam = c.req.query('date');
+  if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    return c.json({ error: 'date query param required (YYYY-MM-DD)' }, 400);
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const isToday = dateParam === today;
+  const isPast = dateParam < today;
+  const isFuture = dateParam > today;
+
+  let result: any[] = [];
+
+  if (isToday) {
+    // Spawn recurring missions, return all active + completed today
+    await spawnRecurringMissions(DEFAULT_USER_ID);
+
+    const userMissions = await db
+      .select()
+      .from(missions)
+      .where(
+        and(
+          eq(missions.userId, DEFAULT_USER_ID),
+          or(
+            eq(missions.status, 'active'),
+            and(
+              eq(missions.status, 'completed'),
+              like(missions.completedAt, `${today}%`),
+            ),
+          ),
+        ),
+      );
+    result = userMissions.filter((m) => !m.isRecurring);
+  } else if (isPast) {
+    // Return missions with dueDate on that date (any status) + completed on that date
+    const userMissions = await db
+      .select()
+      .from(missions)
+      .where(
+        and(
+          eq(missions.userId, DEFAULT_USER_ID),
+          or(
+            eq(missions.dueDate, dateParam),
+            like(missions.completedAt, `${dateParam}%`),
+          ),
+        ),
+      );
+    result = userMissions.filter((m) => !m.isRecurring);
+  } else {
+    // Future: only active missions with dueDate on that date
+    const userMissions = await db
+      .select()
+      .from(missions)
+      .where(
+        and(
+          eq(missions.userId, DEFAULT_USER_ID),
+          eq(missions.status, 'active'),
+          eq(missions.dueDate, dateParam),
+        ),
+      );
+    result = userMissions.filter((m) => !m.isRecurring);
+  }
+
+  const enriched = await Promise.all(result.map(enrichWithCategory));
+
+  return c.json({ missions: enriched, date: dateParam, isToday, isPast, isFuture });
 });
 
 // GET /api/missions/recurring — list recurring templates

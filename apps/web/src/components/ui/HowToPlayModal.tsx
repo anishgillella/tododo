@@ -64,7 +64,7 @@ export function HowToPlayModal() {
             How to Play
           </h2>
           <p className="mt-1 font-mono text-[10px] text-steel-light">
-            // The Drifter&apos;s Field Guide to Drifthollow
+            A guide to Drifthollow
           </p>
         </div>
 

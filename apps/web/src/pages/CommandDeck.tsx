@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMissions, useCreateMission, useCompleteMission, useDeleteMission } from '../hooks/useMissions';
+import { useMissionsByDate, useCreateMission, useCompleteMission, useDeleteMission } from '../hooks/useMissions';
 import { useCategories } from '../hooks/useCategories';
 import { useAgent } from '../hooks/useAgent';
 import { useTriggerEndOfDay } from '../hooks/useRecap';
@@ -13,12 +13,18 @@ import { BulkMissionInput } from '../components/missions/BulkMissionInput';
 import { CategorySection } from '../components/missions/CategorySection';
 import { MissionList } from '../components/missions/MissionList';
 import { CompletionToast } from '../components/missions/CompletionToast';
+import { DateNavigator } from '../components/missions/DateNavigator';
 import { HabitCard } from '../components/missions/HabitCard';
 import { HabitForm } from '../components/missions/HabitForm';
 
 export function CommandDeck() {
   const { data: agent, isLoading: agentLoading } = useAgent();
-  const { data: missions = [], isLoading: missionsLoading } = useMissions();
+  const selectedDate = useMissionStore((s) => s.selectedDate);
+  const { data: dateResponse, isLoading: missionsLoading } = useMissionsByDate(selectedDate);
+  const missions = dateResponse?.missions ?? [];
+  const isToday = dateResponse?.isToday ?? true;
+  const isPast = dateResponse?.isPast ?? false;
+  const isFuture = dateResponse?.isFuture ?? false;
   const { data: categories = [] } = useCategories();
   const createMission = useCreateMission();
   const completeMission = useCompleteMission();
@@ -40,8 +46,14 @@ export function CommandDeck() {
   const setLastCompletion = useMissionStore((s) => s.setLastCompletion);
   const clearLastCompletion = useMissionStore((s) => s.clearLastCompletion);
 
-  // Filter to only active missions
-  const activeMissions = missions.filter((m) => m.status === 'active');
+  // For today: show active + completed. For past/future: show all returned missions.
+  const activeMissions = isToday
+    ? missions.filter((m) => m.status === 'active')
+    : missions;
+  // Completed missions for today view (shown separately with read-only badges)
+  const completedToday = isToday
+    ? missions.filter((m) => m.status === 'completed')
+    : [];
 
   // Group missions by category
   const groupedMissions = useMemo(() => {
@@ -82,6 +94,7 @@ export function CommandDeck() {
 
   const handleCompleteMission = useCallback(
     (id: string) => {
+      if (!isToday) return;
       completeMission.mutate(id, {
         onSuccess: (result) => {
           setLastCompletion({
@@ -96,7 +109,7 @@ export function CommandDeck() {
         },
       });
     },
-    [completeMission, setLastCompletion],
+    [completeMission, setLastCompletion, isToday],
   );
 
   const handleDeleteMission = useCallback(
@@ -119,13 +132,30 @@ export function CommandDeck() {
       {/* Header */}
       <header className="mb-6">
         <h1 className="font-display text-2xl font-bold tracking-widest text-parchment uppercase">
-          Command Deck
+          Quest Board
         </h1>
         <p className="mt-1 font-mono text-sm tracking-wide text-ash">
-          // Mission Control
+          Your daily quests await
         </p>
         <div className="mt-3 h-px bg-gradient-to-r from-arcane via-steel to-transparent" />
       </header>
+
+      {/* Date navigator */}
+      <div className="mb-4">
+        <DateNavigator />
+      </div>
+
+      {/* Contextual banners */}
+      {isPast && (
+        <div className="mb-4 rounded-lg border border-steel bg-void-lighter px-4 py-2 text-center font-mono text-xs text-ash">
+          Viewing past log. Read-only.
+        </div>
+      )}
+      {isFuture && (
+        <div className="mb-4 rounded-lg border border-drift/30 bg-drift/5 px-4 py-2 text-center font-mono text-xs text-drift-light">
+          Planning ahead.
+        </div>
+      )}
 
       {/* Agent HUD */}
       <div className="mb-6">
@@ -199,7 +229,8 @@ export function CommandDeck() {
       ) : (
       /* ─── Tasks Tab ─── */
       <>
-      {/* Mission input — toggle between single and bulk */}
+      {/* Mission input — toggle between single and bulk (hidden for past dates) */}
+      {!isPast && (
       <div className="mb-4">
         <div className="mb-2 flex items-center gap-3">
           <button
@@ -209,7 +240,7 @@ export function CommandDeck() {
               inputMode === 'single' ? 'text-arcane-light' : 'text-steel-light hover:text-ash'
             }`}
           >
-            + New Mission
+            + New Quest
           </button>
           <span className="text-steel-light">/</span>
           <button
@@ -228,20 +259,23 @@ export function CommandDeck() {
             onSubmit={handleCreateMission}
             isLoading={createMission.isPending}
             categories={categories}
+            defaultDueDate={isFuture ? selectedDate : undefined}
           />
         ) : (
           <BulkMissionInput
             categories={categories}
             onDone={() => setInputMode('single')}
+            defaultDueDate={isFuture ? selectedDate : undefined}
           />
         )}
       </div>
+      )}
 
       {/* Active missions count */}
       {!missionsLoading && activeMissions.length > 0 && (
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-mono text-xs uppercase tracking-wider text-ash">
-            Active Missions
+            {isPast ? 'Quests' : isFuture ? 'Scheduled Quests' : 'Active Quests'}
           </h2>
           <span className="font-mono text-xs text-steel-light">
             [{activeMissions.length}]
@@ -273,6 +307,8 @@ export function CommandDeck() {
                   missions={catMissions}
                   onComplete={handleCompleteMission}
                   onDelete={handleDeleteMission}
+                  readOnly={isPast}
+                  canComplete={isToday}
                 />
               );
             })}
@@ -286,6 +322,8 @@ export function CommandDeck() {
                 missions={groupedMissions.uncategorized}
                 onComplete={handleCompleteMission}
                 onDelete={handleDeleteMission}
+                readOnly={isPast}
+                canComplete={isToday}
               />
             )}
           </>
@@ -295,14 +333,37 @@ export function CommandDeck() {
             onComplete={handleCompleteMission}
             onDelete={handleDeleteMission}
             isLoading={false}
+            readOnly={isPast}
+            canComplete={isToday}
           />
+        )}
+
+        {/* Completed missions section (today only) */}
+        {isToday && completedToday.length > 0 && (
+          <>
+            <div className="mt-4 mb-3 flex items-center justify-between">
+              <h2 className="font-mono text-xs uppercase tracking-wider text-ash">
+                Completed Today
+              </h2>
+              <span className="font-mono text-xs text-steel-light">
+                [{completedToday.length}]
+              </span>
+            </div>
+            <MissionList
+              missions={completedToday}
+              onComplete={handleCompleteMission}
+              onDelete={handleDeleteMission}
+              isLoading={false}
+              readOnly
+            />
+          </>
         )}
       </section>
       </>
       )}
 
-      {/* End Day */}
-      {!missionsLoading && (
+      {/* End Day — only shown when viewing today */}
+      {!missionsLoading && isToday && (
         <div className="mt-6 mb-4">
           <div className="h-px bg-gradient-to-r from-transparent via-steel to-transparent mb-4" />
           <motion.button
@@ -347,7 +408,7 @@ export function CommandDeck() {
               </p>
               {activeMissions.length > 0 && (
                 <p className="mt-2 font-mono text-xs text-ember-light">
-                  {activeMissions.length} active mission{activeMissions.length > 1 ? 's' : ''} will be marked incomplete.
+                  {activeMissions.length} active quest{activeMissions.length > 1 ? 's' : ''} will be marked incomplete.
                 </p>
               )}
               <div className="mt-5 flex gap-3">

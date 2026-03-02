@@ -14,7 +14,7 @@ export function LoadingScreen() {
           Tododo
         </h1>
         <p className="mt-2 font-mono text-xs tracking-wider text-ash">
-          The Drifter&apos;s Log
+          The Adventurer&apos;s Chronicle
         </p>
       </motion.div>
 
@@ -50,7 +50,7 @@ export function LoadingScreen() {
         transition={{ delay: 0.6, duration: 0.5 }}
         className="mt-8 font-mono text-[10px] text-steel-light"
       >
-        [INITIALIZING SYSTEMS...]
+        [AWAKENING DRIFTHOLLOW...]
       </motion.p>
     </div>
   );

@@ -147,6 +147,26 @@ export function decayStreak(currentDays: number, mode: DifficultyMode): number {
   return Math.floor(currentDays * target);
 }
 
+/** Calculate encounter chance based on mission difficulty. Returns 0-1. */
+export function calculateEncounterChance(difficulty: MissionDifficulty, bonusPercent: number = 0): number {
+  const baseChances: Record<number, number> = { 1: 0.05, 2: 0.10, 3: 0.15, 4: 0.20, 5: 0.30 };
+  const base = baseChances[difficulty] ?? 0.10;
+  return Math.min(0.5, base + bonusPercent / 100);
+}
+
+/** Get base combat stats for a given level */
+export function getAgentCombatStats(level: number): {
+  maxHp: number;
+  attack: number;
+  defense: number;
+} {
+  return {
+    maxHp: 100 + (level - 1) * 5,
+    attack: 5 + (level - 1) * 2,
+    defense: 3 + (level - 1) * 1,
+  };
+}
+
 /** Check if agent can level up, returns new level and remaining XP */
 export function processLevelUp(currentLevel: number, currentXp: number): {
   newLevel: number;

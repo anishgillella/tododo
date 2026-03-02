@@ -1,14 +1,7 @@
-import { useState, useCallback, lazy, Suspense } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Canvas } from '@react-three/fiber';
 import { api } from '../lib/api';
-
-const OnboardingScene = lazy(() =>
-  import('../components/three/OnboardingScene').then((m) => ({
-    default: m.OnboardingScene,
-  })),
-);
 
 /**
  * 6-stage guided onboarding:
@@ -63,16 +56,14 @@ const STAGE_TEXT = [
 export function InteractiveOnboarding() {
   const navigate = useNavigate();
   const [stage, setStage] = useState(0);
-  const [flyPlaying, setFlyPlaying] = useState(false);
   const [username, setUsername] = useState('');
   const [difficulty, setDifficulty] = useState('drifter');
   const [showSetup, setShowSetup] = useState(false);
 
   const handleButtonClick = useCallback(async () => {
     if (stage === 0) {
-      // Start flythrough
+      // Skip flythrough (no 3D scene), advance to next stage
       setStage(1);
-      setFlyPlaying(true);
     } else if (stage < 5) {
       setStage((s) => s + 1);
     } else {
@@ -94,42 +85,12 @@ export function InteractiveOnboarding() {
     }
   }, [stage, showSetup, username, difficulty, navigate]);
 
-  const handleFlythroughComplete = useCallback(() => {
-    setFlyPlaying(false);
-    setStage(5);
-  }, []);
-
-  const handleKeyframeReached = useCallback((index: number) => {
-    // Map keyframes to stages: keyframe 2 → Guild Hall (stage 2), 3 → Tavern (stage 3), 4 → Training (stage 4)
-    if (index === 2) setStage(2);
-    else if (index === 3) setStage(3);
-    else if (index === 4) setStage(4);
-  }, []);
-
   const currentText = STAGE_TEXT[stage];
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-void">
-      {/* 3D Canvas background */}
-      <div className="absolute inset-0">
-        <Suspense
-          fallback={
-            <div className="flex h-full w-full items-center justify-center">
-              <div className="font-display text-sm tracking-wider text-arcane-light animate-pulse">
-                Awakening Drifthollow...
-              </div>
-            </div>
-          }
-        >
-          <Canvas shadows camera={{ position: [0, 25, 30], fov: 55 }}>
-            <OnboardingScene
-              playing={flyPlaying}
-              onFlythroughComplete={handleFlythroughComplete}
-              onKeyframeReached={handleKeyframeReached}
-            />
-          </Canvas>
-        </Suspense>
-      </div>
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#4A8BA0] via-[#3A6B35] to-[#1A1410]" />
 
       {/* Gradient overlay for text readability */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-void/90 via-void/30 to-transparent" />
@@ -169,7 +130,7 @@ export function InteractiveOnboarding() {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Your callsign..."
+                    placeholder="Your name..."
                     maxLength={24}
                     className="w-full rounded-lg border border-steel bg-void-light/80 px-4 py-2 text-center font-display text-sm tracking-wider text-parchment placeholder:text-steel-light focus:border-arcane focus:outline-none backdrop-blur-sm"
                   />

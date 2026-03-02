@@ -6,6 +6,8 @@ import { Forge } from './pages/Forge';
 import { RiftGate } from './pages/RiftGate';
 import { DailyRecap } from './pages/DailyRecap';
 import { Settings } from './pages/Settings';
+import Bestiary from './pages/Bestiary';
+import Achievements from './pages/Achievements';
 import { Onboarding } from './pages/Onboarding';
 import { InteractiveOnboarding } from './pages/InteractiveOnboarding';
 import { Layout } from './components/Layout';
@@ -53,6 +55,8 @@ export function App() {
         <Route path="/forge" element={<Forge />} />
         <Route path="/rift-gate" element={<RiftGate />} />
         <Route path="/daily-recap" element={<DailyRecap />} />
+        <Route path="/bestiary" element={<Bestiary />} />
+        <Route path="/achievements" element={<Achievements />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
     </Routes>

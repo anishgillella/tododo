@@ -88,8 +88,8 @@ Write in third person past tense. Keep it dramatic but concise.`,
 
 export const FALLBACK_RESPONSES: Record<string, string> = {
   axiom: 'The wards are... experiencing interference. Try again when the arcane currents clear. Which, knowing your luck, could be a while.',
-  kael: 'Ugh, comms are down. Probably YOUR fault somehow. Whatever, I have missions to crush.',
-  mira: 'The ether is thick today, dear Drifter. My words cannot reach you through the static. But know this -- you are not alone.',
+  kael: 'Ugh, the ether is muddled. Probably YOUR fault somehow. Whatever, I have quests to crush.',
+  mira: 'The ether is thick today, dear Drifter. My words cannot reach you through the mist. But know this -- you are not alone.',
   hollow: 'The silence... speaks volumes. Even the void has its limits. We will continue this... later.',
   drifter: 'The Drifter paused, the village quiet around them save for distant firelight. A moment of stillness before the next quest.',
 };

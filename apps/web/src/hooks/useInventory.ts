@@ -23,6 +23,8 @@ export interface InventoryItem {
   quantity: number;
   equipped: boolean;
   effect: string;
+  slot?: string;
+  rarity?: string;
 }
 
 interface InventoryResponse {
@@ -91,6 +93,36 @@ export function useUseItem() {
   return useMutation({
     mutationFn: (input: UseItemInput) =>
       api.post<UseItemResponse>('/api/inventory/use', input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['agent'] });
+    },
+  });
+}
+
+interface EquipItemInput {
+  itemId: string;
+}
+
+export function useEquipItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: EquipItemInput) =>
+      api.post<{ equipped: string; slot: string }>('/api/inventory/equip', input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['agent'] });
+    },
+  });
+}
+
+export function useUnequipItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: EquipItemInput) =>
+      api.post<{ unequipped: string }>('/api/inventory/unequip', input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['agent'] });

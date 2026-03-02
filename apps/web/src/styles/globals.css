@@ -1,32 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  /* Sci-fantasy color palette */
-  --color-void: #0a0a0f;
-  --color-void-light: #12121a;
-  --color-void-lighter: #1a1a2e;
-  --color-steel: #2a2a3e;
-  --color-steel-light: #3a3a52;
-  --color-ash: #8a8a9e;
-  --color-bone: #c8c8d8;
-  --color-parchment: #e8e8f0;
+  /* Medieval fantasy color palette */
+  --color-void: #1A1410;
+  --color-void-light: #2A2218;
+  --color-void-lighter: #3A3020;
+  --color-steel: #5C4A38;
+  --color-steel-light: #7A6548;
+  --color-ash: #B8A890;
+  --color-bone: #D8CCB8;
+  --color-parchment: #F0E8D8;
 
   /* Accent colors */
-  --color-arcane: #7c3aed;
-  --color-arcane-light: #a78bfa;
-  --color-arcane-dim: #4c1d95;
+  --color-arcane: #8B5E3C;
+  --color-arcane-light: #B8834A;
+  --color-arcane-dim: #5A3820;
   --color-ember: #f59e0b;
   --color-ember-light: #fbbf24;
   --color-ember-dim: #92400e;
-  --color-rift: #ef4444;
-  --color-rift-light: #f87171;
-  --color-rift-dim: #991b1b;
-  --color-drift: #06b6d4;
-  --color-drift-light: #22d3ee;
-  --color-drift-dim: #155e75;
-  --color-verdant: #10b981;
-  --color-verdant-light: #34d399;
-  --color-verdant-dim: #064e3b;
+  --color-rift: #C84040;
+  --color-rift-light: #E06050;
+  --color-rift-dim: #802020;
+  --color-drift: #4A8BA0;
+  --color-drift-light: #6AABB8;
+  --color-drift-dim: #2A5B68;
+  --color-verdant: #4A8B50;
+  --color-verdant-light: #6AAB68;
+  --color-verdant-dim: #2A5B28;
 
   /* Streak colors */
   --color-spark: #fbbf24;
@@ -48,13 +48,13 @@
   --color-energy: var(--color-drift);
 
   /* Shadows & glows */
-  --shadow-arcane: 0 0 20px rgba(124, 58, 237, 0.3);
+  --shadow-arcane: 0 0 20px rgba(139, 94, 60, 0.3);
   --shadow-ember: 0 0 20px rgba(245, 158, 11, 0.3);
-  --shadow-rift: 0 0 20px rgba(239, 68, 68, 0.3);
+  --shadow-rift: 0 0 20px rgba(200, 64, 64, 0.3);
 
   /* Fonts */
-  --font-display: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Cinzel', 'Georgia', serif;
+  --font-body: 'Nunito', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
@@ -77,21 +77,6 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-steel-light);
-}
-
-/* Scanline overlay effect */
-.scanlines::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
-  );
-  pointer-events: none;
 }
 
 /* Glow effect for important elements */
@@ -154,7 +139,7 @@ textarea:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--color-arcane-light);
   outline-offset: 0;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 0 0 4px rgba(139, 94, 60, 0.15);
 }
 
 /* Button press feedback */
@@ -185,7 +170,7 @@ a {
 }
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(139, 94, 60, 0.1);
   border-color: var(--color-steel-light);
 }
 
@@ -198,7 +183,7 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12), 0 0 12px rgba(124, 58, 237, 0.08);
+  box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.12), 0 0 12px rgba(139, 94, 60, 0.08);
 }
 
 /* ═══════════════════════════════════════════
@@ -262,11 +247,11 @@ select:focus {
 @keyframes pulse-glow {
   0%, 100% {
     opacity: 0.4;
-    box-shadow: 0 0 10px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 0 10px rgba(139, 94, 60, 0.15);
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 0 20px rgba(139, 94, 60, 0.3);
   }
 }
 
@@ -295,18 +280,12 @@ select:focus {
 }
 
 /* ═══════════════════════════════════════════
-   3D VILLAGE CANVAS & OVERLAY
+   GAME CANVAS & OVERLAY
    ═══════════════════════════════════════════ */
 
-.three-canvas {
+.game-canvas {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.three-canvas canvas {
-  display: block;
   width: 100%;
   height: 100%;
 }

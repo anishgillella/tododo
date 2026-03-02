@@ -17,6 +17,8 @@ export const agents = sqliteTable('agents', {
   xp: integer('xp').default(0),
   hp: integer('hp').default(100),
   maxHp: integer('max_hp').default(100),
+  attack: integer('attack').default(5),
+  defense: integer('defense').default(3),
   energy: integer('energy').default(100),
   maxEnergy: integer('max_energy').default(100),
   reputation: integer('reputation').default(0),
@@ -120,6 +122,9 @@ export const inventory = sqliteTable('inventory', {
   type: text('type'),
   quantity: integer('quantity').default(1),
   effectJson: text('effect_json'),
+  equipped: integer('equipped', { mode: 'boolean' }).default(false),
+  slot: text('slot'),
+  rarity: text('rarity').default('common'),
 });
 
 // === Game Events ===
@@ -129,6 +134,25 @@ export const gameEvents = sqliteTable('game_events', {
   type: text('type'),
   data: text('data'),
   createdAt: text('created_at'),
+});
+
+// === Achievements ===
+export const achievements = sqliteTable('achievements', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id),
+  achievementId: text('achievement_id'),
+  unlockedAt: text('unlocked_at'),
+});
+
+// === Bestiary ===
+export const bestiary = sqliteTable('bestiary', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id),
+  creatureId: text('creature_id'),
+  timesDefeated: integer('times_defeated').default(0),
+  timesLost: integer('times_lost').default(0),
+  firstEncountered: text('first_encountered'),
+  lastEncountered: text('last_encountered'),
 });
 
 // === Agent Memory (LangChain summary memory) ===

@@ -23,6 +23,8 @@ interface CategorySectionProps {
   missions: Mission[];
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
+  canComplete?: boolean;
 }
 
 export function CategorySection({
@@ -32,6 +34,8 @@ export function CategorySection({
   missions,
   onComplete,
   onDelete,
+  readOnly,
+  canComplete,
 }: CategorySectionProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -86,6 +90,8 @@ export function CategorySection({
                     mission={mission}
                     onComplete={onComplete}
                     onDelete={onDelete}
+                    readOnly={readOnly}
+                    canComplete={canComplete}
                   />
                 ))}
               </AnimatePresence>

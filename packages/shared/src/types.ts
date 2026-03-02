@@ -3,6 +3,8 @@ export type DifficultyMode = 'explorer' | 'drifter' | 'ironclad';
 export type MissionStatus = 'active' | 'completed' | 'failed' | 'carried_over';
 export type MissionDifficulty = 1 | 2 | 3 | 4 | 5;
 export type ItemType = 'consumable' | 'equipment' | 'cosmetic';
+export type EquipmentSlot = 'weapon' | 'armor' | 'accessory';
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 export type StreakTier = 'none' | 'spark' | 'flame' | 'blaze' | 'inferno' | 'eternal_fire';
 export type NpcCharacter = 'axiom' | 'kael' | 'mira' | 'hollow' | 'drifter';
 export type HollowStage = 'dormant' | 'whispers' | 'presence' | 'confrontation' | 'forced';
@@ -59,6 +61,8 @@ export interface Agent {
   xpToNext: number;
   hp: number;
   maxHp: number;
+  attack: number;
+  defense: number;
   energy: number;
   maxEnergy: number;
   reputation: number;
@@ -148,6 +152,9 @@ export interface InventoryItem {
   type: ItemType;
   quantity: number;
   effectJson?: string;
+  equipped?: boolean;
+  slot?: EquipmentSlot;
+  rarity?: ItemRarity;
 }
 
 export interface GameEvent {
@@ -177,6 +184,12 @@ export interface UpdateMissionInput {
   dueDate?: string;
 }
 
+export interface LevelUpRewards {
+  hpGained: number;
+  attackGained: number;
+  defenseGained: number;
+}
+
 export interface CompleteMissionResult {
   mission: Mission;
   xpGained: number;
@@ -186,6 +199,7 @@ export interface CompleteMissionResult {
   comboBonus: number;
   leveledUp: boolean;
   newLevel?: number;
+  levelUpRewards?: LevelUpRewards;
   streakUpdate?: {
     days: number;
     tier: StreakTier;
