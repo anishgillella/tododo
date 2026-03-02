@@ -8,6 +8,8 @@ export interface Agent {
   xpToNext: number;
   hp: number;
   maxHp: number;
+  attack: number;
+  defense: number;
   energy: number;
   maxEnergy: number;
   gold: number;

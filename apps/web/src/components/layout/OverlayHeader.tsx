@@ -7,6 +7,8 @@ const OVERLAY_TITLES: Record<Exclude<OverlayRoute, null>, string> = {
   '/forge': "Blacksmith's Forge",
   '/rift-gate': 'Rift Gate',
   '/daily-recap': "Chronicler's Tower",
+  '/bestiary': 'Bestiary',
+  '/achievements': 'Achievements',
   '/settings': "Elder's Study",
 };
 

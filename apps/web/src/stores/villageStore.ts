@@ -7,6 +7,8 @@ export type OverlayRoute =
   | '/forge'
   | '/rift-gate'
   | '/daily-recap'
+  | '/bestiary'
+  | '/achievements'
   | '/settings'
   | null;
 

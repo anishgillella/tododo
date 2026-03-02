@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MISSION_DIFFICULTIES } from '@tododo/shared';
 import type { MissionDifficulty } from '@tododo/shared';
@@ -15,18 +15,23 @@ interface MissionFormProps {
   }) => void;
   isLoading?: boolean;
   categories?: Category[];
+  defaultDueDate?: string;
 }
 
 const difficulties: MissionDifficulty[] = [1, 2, 3, 4, 5];
 
-export function MissionForm({ onSubmit, isLoading = false, categories = [] }: MissionFormProps) {
+export function MissionForm({ onSubmit, isLoading = false, categories = [], defaultDueDate }: MissionFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState<MissionDifficulty>(2);
   const [categoryId, setCategoryId] = useState<string>('');
   const [isRecurring, setIsRecurring] = useState(false);
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(defaultDueDate ?? '');
+
+  useEffect(() => {
+    setDueDate(defaultDueDate ?? '');
+  }, [defaultDueDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

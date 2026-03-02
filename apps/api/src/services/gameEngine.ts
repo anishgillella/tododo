@@ -1,7 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../db/index';
-import { missions, agents, gameEvents, users } from '../db/schema';
+import { missions, agents, gameEvents, users, agentSkills, inventory } from '../db/schema';
 import {
   calculateMissionXp,
   calculateMissionGold,
@@ -15,6 +15,13 @@ import {
   decayStreak,
   calculateFailureDamage,
   xpForLevel,
+  getAgentCombatStats,
+  calculateEncounterChance,
+  selectRandomCreature,
+  scaleCreatureToLevel,
+  CRIT_CHANCE,
+  CRIT_MULTIPLIER,
+  LOOT_DROP_CHANCE,
   type MissionDifficulty,
   type StreakTier,
   type DifficultyMode,
@@ -29,6 +36,19 @@ import {
 
 // ── Return Types ─────────────────────────────────────────────────────
 
+export interface LevelUpRewards {
+  hpGained: number;
+  attackGained: number;
+  defenseGained: number;
+}
+
+export interface EncounterInfo {
+  creatureId: string;
+  creatureName: string;
+  creatureShape: string;
+  sessionId: string;
+}
+
 export interface CompleteMissionResult {
   mission: Record<string, unknown>;
   xpGained: number;
@@ -40,12 +60,96 @@ export interface CompleteMissionResult {
   overdriveTriggered: boolean;
   leveledUp: boolean;
   newLevel?: number;
+  levelUpRewards?: LevelUpRewards;
+  encounter?: EncounterInfo;
+  achievements?: { achievementId: string; name: string; tier: string; rewards: { xp: number; gold: number; title?: string } }[];
   streakUpdate?: {
     days: number;
     tier: StreakTier;
     multiplier: number;
   };
   events: string[];
+}
+
+// ── Active Effects from Skills + Equipment ──────────────────────────
+
+export interface ActiveEffects {
+  xp_bonus_percent: number;
+  gold_bonus_percent: number;
+  crit_chance_percent: number;
+  crit_multiplier_bonus: number;
+  loot_drop_chance_percent: number;
+  combo_bonus_xp: number;
+  hard_mission_xp_bonus_percent: number;
+  boss_win_chance_percent: number;
+  failure_damage_reduction_percent: number;
+  streak_threshold_reduction_percent: number;
+  max_hp_bonus: number;
+  max_energy_bonus: number;
+  gold_range_percent: number;
+  loot_quality_bonus: number;
+  jackpot_chance_percent: number;
+  reputation_gain_percent: number;
+}
+
+function emptyEffects(): ActiveEffects {
+  return {
+    xp_bonus_percent: 0,
+    gold_bonus_percent: 0,
+    crit_chance_percent: 0,
+    crit_multiplier_bonus: 0,
+    loot_drop_chance_percent: 0,
+    combo_bonus_xp: 0,
+    hard_mission_xp_bonus_percent: 0,
+    boss_win_chance_percent: 0,
+    failure_damage_reduction_percent: 0,
+    streak_threshold_reduction_percent: 0,
+    max_hp_bonus: 0,
+    max_energy_bonus: 0,
+    gold_range_percent: 0,
+    loot_quality_bonus: 0,
+    jackpot_chance_percent: 0,
+    reputation_gain_percent: 0,
+  };
+}
+
+/** Aggregate all active skill effects and equipped item effects for an agent */
+export async function getActiveEffects(agentId: string): Promise<ActiveEffects> {
+  const effects = emptyEffects();
+
+  // Read agent skills
+  const skills = await db
+    .select()
+    .from(agentSkills)
+    .where(eq(agentSkills.agentId, agentId));
+
+  for (const skill of skills) {
+    if (!skill.effectJson) continue;
+    try {
+      const parsed = JSON.parse(skill.effectJson) as { type: string; value: number };
+      if (parsed.type in effects) {
+        (effects as unknown as Record<string, number>)[parsed.type] += parsed.value;
+      }
+    } catch { /* skip invalid */ }
+  }
+
+  // Read equipped inventory items
+  const equippedItems = await db
+    .select()
+    .from(inventory)
+    .where(and(eq(inventory.agentId, agentId), eq(inventory.equipped, true)));
+
+  for (const item of equippedItems) {
+    if (!item.effectJson) continue;
+    try {
+      const parsed = JSON.parse(item.effectJson) as { type: string; value: number };
+      if (parsed.type in effects) {
+        (effects as unknown as Record<string, number>)[parsed.type] += parsed.value;
+      }
+    } catch { /* skip invalid */ }
+  }
+
+  return effects;
 }
 
 export interface GameState {
@@ -164,24 +268,42 @@ export async function completeMission(
   const difficulty = (mission.difficulty ?? 2) as MissionDifficulty;
   const streakTier = (agent.streakTier ?? 'none') as StreakTier;
 
+  // Get active effects from skills + equipment
+  const effects = await getActiveEffects(agent.id);
+
   // Determine modifiers
   const isOverdrive = agent.overdriveUntil
     ? new Date(agent.overdriveUntil) > new Date()
     : false;
   const jackpotDay = isJackpotDay(today);
 
-  // Calculate XP
-  const { xp: baseXp, wasCrit } = calculateMissionXp(difficulty, streakTier);
+  // Calculate XP with skill bonuses
+  const skillXpBonus = effects.xp_bonus_percent / 100;
+  const hardMissionBonus = (difficulty >= 4 ? effects.hard_mission_xp_bonus_percent / 100 : 0);
+  const totalXpBonus = skillXpBonus + hardMissionBonus;
 
-  // Calculate gold
-  const goldGained = calculateMissionGold(difficulty, jackpotDay, isOverdrive);
+  // Crit with skill bonuses
+  const effectiveCritChance = CRIT_CHANCE + effects.crit_chance_percent / 100;
+  const effectiveCritMult = CRIT_MULTIPLIER + effects.crit_multiplier_bonus;
+  const wasCrit = Math.random() < effectiveCritChance;
+  const critMult = wasCrit ? effectiveCritMult : 1;
 
-  // Combo
+  const { xp: baseXp } = calculateMissionXp(difficulty, streakTier, totalXpBonus);
+  // Re-apply crit with skill-modified multiplier (calculateMissionXp uses default crit, so we recalc)
+  const streakMult = getStreakMultiplier(streakTier);
+  const base = { 1: 15, 2: 30, 3: 45, 4: 60, 5: 75 }[difficulty] ?? 30;
+  const calculatedXp = Math.floor(base * streakMult * (1 + totalXpBonus) * critMult);
+
+  // Calculate gold with skill bonuses
+  let goldGained = calculateMissionGold(difficulty, jackpotDay, isOverdrive);
+  goldGained = Math.floor(goldGained * (1 + effects.gold_bonus_percent / 100));
+
+  // Combo with skill bonus
   const comboCount = (agent.comboCount ?? 0) + 1;
-  const comboBonus = getComboBonus(comboCount);
+  const comboBonus = getComboBonus(comboCount) + (comboCount >= 2 ? effects.combo_bonus_xp : 0);
 
   // Total XP
-  const totalXp = baseXp + comboBonus;
+  const totalXp = calculatedXp + comboBonus;
 
   // New totals
   const newXp = (agent.xp ?? 0) + totalXp;
@@ -195,28 +317,58 @@ export async function completeMission(
     newOverdriveUntil = new Date(Date.now() + OVERDRIVE_DURATION_MS).toISOString();
   }
 
-  // Loot drop (8% chance)
-  const lootDropped = rollLootDrop();
+  // Loot drop with skill bonus
+  const effectiveLootChance = LOOT_DROP_CHANCE + effects.loot_drop_chance_percent / 100;
+  const lootDropped = Math.random() < effectiveLootChance;
   const lootDrop = lootDropped ? 'mystery_item' : null;
 
   // Level up (can multi-level)
-  const { newLevel, remainingXp, leveledUp } = processLevelUp(agent.level ?? 1, newXp);
+  const oldLevel = agent.level ?? 1;
+  const { newLevel, remainingXp, leveledUp } = processLevelUp(oldLevel, newXp);
 
-  // Personality trait shifts
-  const newDiscipline = clampTrait((agent.discipline ?? 0.5) + TRAIT_SHIFT_COMPLETE);
-  const newCourage = clampTrait((agent.courage ?? 0.5) + TRAIT_SHIFT_COMPLETE);
+  // Level-up stat scaling: +5 HP, +2 ATK, +1 DEF per level gained
+  let levelUpRewards: LevelUpRewards | undefined;
+  const agentUpdate: Record<string, unknown> = {
+    xp: remainingXp,
+    level: newLevel,
+    gold: newGold,
+    comboCount,
+    lastCompletionDate: now,
+    discipline: clampTrait((agent.discipline ?? 0.5) + TRAIT_SHIFT_COMPLETE),
+    courage: clampTrait((agent.courage ?? 0.5) + TRAIT_SHIFT_COMPLETE),
+    streakDays: agent.streakDays ?? 0,
+    streakTier: agent.streakTier ?? 'none',
+    overdriveUntil: newOverdriveUntil,
+  };
+
+  if (leveledUp) {
+    const levelsGained = newLevel - oldLevel;
+    const newStats = getAgentCombatStats(newLevel);
+    const oldStats = getAgentCombatStats(oldLevel);
+    const hpGained = newStats.maxHp - oldStats.maxHp;
+    const attackGained = newStats.attack - oldStats.attack;
+    const defenseGained = newStats.defense - oldStats.defense;
+
+    levelUpRewards = { hpGained, attackGained, defenseGained };
+    agentUpdate.maxHp = newStats.maxHp;
+    agentUpdate.attack = newStats.attack;
+    agentUpdate.defense = newStats.defense;
+    // Heal by the HP increase amount
+    agentUpdate.hp = Math.min(newStats.maxHp, (agent.hp ?? 100) + hpGained);
+  }
 
   // Streak update: check if this is a new day compared to lastCompletionDate
   let newStreakDays = agent.streakDays ?? 0;
   const lastDate = agent.lastCompletionDate ? agent.lastCompletionDate.slice(0, 10) : null;
 
   if (lastDate !== today) {
-    // New day completion - increment streak
     newStreakDays += 1;
   }
 
   const newStreakTier = getStreakTier(newStreakDays);
   const newStreakMultiplier = getStreakMultiplier(newStreakTier);
+  agentUpdate.streakDays = newStreakDays;
+  agentUpdate.streakTier = newStreakTier;
 
   // Build events list
   const events: string[] = ['mission_complete'];
@@ -229,18 +381,7 @@ export async function completeMission(
   // Update agent in DB
   await db
     .update(agents)
-    .set({
-      xp: remainingXp,
-      level: newLevel,
-      gold: newGold,
-      comboCount,
-      lastCompletionDate: now,
-      discipline: newDiscipline,
-      courage: newCourage,
-      streakDays: newStreakDays,
-      streakTier: newStreakTier,
-      overdriveUntil: newOverdriveUntil,
-    })
+    .set(agentUpdate)
     .where(eq(agents.id, agent.id));
 
   // Mark mission complete
@@ -266,13 +407,41 @@ export async function completeMission(
     newLevel,
     lootDrop,
     overdriveTriggered,
+    levelUpRewards,
   });
 
   if (leveledUp) {
     await logGameEvent(userId, 'level_up', {
-      oldLevel: agent.level ?? 1,
+      oldLevel,
       newLevel,
+      rewards: levelUpRewards,
     });
+  }
+
+  // Check achievements
+  let newAchievements: { achievementId: string; name: string; tier: string; rewards: { xp: number; gold: number; title?: string } }[] = [];
+  try {
+    const { checkAndAwardAchievements } = await import('./achievementService');
+    newAchievements = await checkAndAwardAchievements(userId);
+    if (newAchievements.length > 0) events.push('achievement_unlocked');
+  } catch { /* skip on error */ }
+
+  // Random encounter check
+  let encounter: EncounterInfo | undefined;
+  const encounterChance = calculateEncounterChance(difficulty, effects.loot_drop_chance_percent);
+  if (Math.random() < encounterChance) {
+    try {
+      const { startCombat } = await import('./combatService');
+      const creature = selectRandomCreature(newLevel);
+      const combatState = await startCombat(userId, 'encounter', creature.id);
+      encounter = {
+        creatureId: creature.id,
+        creatureName: creature.name,
+        creatureShape: creature.shape,
+        sessionId: combatState.sessionId,
+      };
+      events.push('encounter_triggered');
+    } catch { /* silently skip encounter on error */ }
   }
 
   // Fetch updated mission for response
@@ -289,6 +458,9 @@ export async function completeMission(
     overdriveTriggered,
     leveledUp,
     newLevel: leveledUp ? newLevel : undefined,
+    levelUpRewards,
+    encounter,
+    achievements: newAchievements.length > 0 ? newAchievements : undefined,
     streakUpdate: {
       days: newStreakDays,
       tier: newStreakTier,
@@ -377,6 +549,10 @@ export async function processEndOfDay(userId: string): Promise<EndOfDayResult> {
   const totalMissions = missionsCompleted + missionsFailed;
   const completionRate = totalMissions === 0 ? 1 : missionsCompleted / totalMissions;
 
+  // Get active effects for failure damage reduction
+  const effects = await getActiveEffects(agent.id);
+  const damageReduction = 1 - effects.failure_damage_reduction_percent / 100;
+
   // Process failures: HP damage, carry-over, debt
   let totalHpDamage = 0;
   let totalDebtAdded = 0;
@@ -385,7 +561,7 @@ export async function processEndOfDay(userId: string): Promise<EndOfDayResult> {
   for (const m of activeMissions) {
     const diff = (m.difficulty ?? 2) as MissionDifficulty;
     const carryOver = (m.carryOverCount ?? 0);
-    const damage = calculateFailureDamage(diff, carryOver, mode);
+    const damage = Math.floor(calculateFailureDamage(diff, carryOver, mode) * damageReduction);
     totalHpDamage += damage;
     totalDebtAdded += 1;
     missionsCarriedOver += 1;
@@ -411,8 +587,13 @@ export async function processEndOfDay(userId: string): Promise<EndOfDayResult> {
   let newStreakDays: number;
   let streakHeld: boolean;
 
-  if (shouldStreakHold(missionsCompleted, totalMissions)) {
-    // Streak holds (>= 80% completion)
+  // Apply streak threshold reduction from skills (min 60%)
+  const thresholdReduction = effects.streak_threshold_reduction_percent / 100;
+  const effectiveThreshold = Math.max(0.6, 0.8 - thresholdReduction);
+  const streakHolds = totalMissions === 0 ? true : (missionsCompleted / totalMissions) >= effectiveThreshold;
+
+  if (streakHolds) {
+    // Streak holds (meets effective threshold)
     streakHeld = true;
     newStreakDays = currentStreakDays;
   } else {

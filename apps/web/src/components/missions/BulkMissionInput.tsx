@@ -9,15 +9,16 @@ import type { Category } from '../../hooks/useCategories';
 interface BulkMissionInputProps {
   categories: Category[];
   onDone: () => void;
+  defaultDueDate?: string;
 }
 
 const difficulties: MissionDifficulty[] = [1, 2, 3, 4, 5];
 
-export function BulkMissionInput({ categories, onDone }: BulkMissionInputProps) {
+export function BulkMissionInput({ categories, onDone, defaultDueDate: propDueDate }: BulkMissionInputProps) {
   const [text, setText] = useState('');
   const [tasks, setTasks] = useState<ParsedTask[]>([]);
   const [phase, setPhase] = useState<'input' | 'review'>('input');
-  const [defaultDueDate, setDefaultDueDate] = useState('');
+  const [defaultDueDate, setDefaultDueDate] = useState(propDueDate ?? '');
 
   const parseMutation = useParseTasks();
   const batchMutation = useCreateBatchMissions();

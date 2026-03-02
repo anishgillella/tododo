@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../db/index';
 import { agents, inventory } from '../db/schema';
-import { ITEM_CATALOG } from '@tododo/shared';
+import { ITEM_CATALOG, type EquipmentSlot } from '@tododo/shared';
 
 const app = new Hono();
 
@@ -122,6 +122,8 @@ app.post('/buy', async (c) => {
       type: itemDef.type,
       quantity: 1,
       effectJson: itemDef.effect ? JSON.stringify(itemDef.effect) : null,
+      slot: itemDef.slot ?? null,
+      rarity: itemDef.rarity ?? 'common',
     });
 
     const inserted = await db.select().from(inventory).where(eq(inventory.id, id));
@@ -234,6 +236,103 @@ app.post('/use', async (c) => {
     effects: appliedEffects,
     remainingQuantity: newQuantity,
   });
+});
+
+// POST /equip — equip an equipment item
+app.post('/equip', async (c) => {
+  const body = await c.req.json();
+  const { itemId } = body;
+
+  if (!itemId) {
+    return c.json({ error: 'itemId is required' }, 400);
+  }
+
+  const agent = await getAgent();
+  if (!agent) {
+    return c.json({ error: 'Agent not found' }, 404);
+  }
+
+  // Find the item in inventory
+  const invRows = await db
+    .select()
+    .from(inventory)
+    .where(
+      and(eq(inventory.agentId, agent.id), eq(inventory.itemId, itemId)),
+    );
+
+  if (invRows.length === 0) {
+    return c.json({ error: 'Item not found in inventory' }, 404);
+  }
+
+  const invItem = invRows[0];
+
+  if (invItem.type !== 'equipment') {
+    return c.json({ error: 'Only equipment can be equipped' }, 400);
+  }
+
+  // Get item definition for slot
+  const itemDef = ITEM_CATALOG.find((i) => i.id === itemId);
+  const slot = invItem.slot ?? itemDef?.slot ?? 'accessory';
+
+  // Unequip any existing item in the same slot
+  const equippedInSlot = await db
+    .select()
+    .from(inventory)
+    .where(
+      and(
+        eq(inventory.agentId, agent.id),
+        eq(inventory.equipped, true),
+        eq(inventory.slot, slot),
+      ),
+    );
+
+  for (const existing of equippedInSlot) {
+    await db
+      .update(inventory)
+      .set({ equipped: false })
+      .where(eq(inventory.id, existing.id));
+  }
+
+  // Equip the new item
+  await db
+    .update(inventory)
+    .set({ equipped: true, slot })
+    .where(eq(inventory.id, invItem.id));
+
+  return c.json({ equipped: itemId, slot });
+});
+
+// POST /unequip — unequip an equipment item
+app.post('/unequip', async (c) => {
+  const body = await c.req.json();
+  const { itemId } = body;
+
+  if (!itemId) {
+    return c.json({ error: 'itemId is required' }, 400);
+  }
+
+  const agent = await getAgent();
+  if (!agent) {
+    return c.json({ error: 'Agent not found' }, 404);
+  }
+
+  const invRows = await db
+    .select()
+    .from(inventory)
+    .where(
+      and(eq(inventory.agentId, agent.id), eq(inventory.itemId, itemId)),
+    );
+
+  if (invRows.length === 0) {
+    return c.json({ error: 'Item not found in inventory' }, 404);
+  }
+
+  await db
+    .update(inventory)
+    .set({ equipped: false })
+    .where(eq(inventory.id, invRows[0].id));
+
+  return c.json({ unequipped: itemId });
 });
 
 export default app;

@@ -69,6 +69,25 @@ export function useMissions() {
   });
 }
 
+export interface MissionsByDateResponse {
+  missions: Mission[];
+  date: string;
+  isToday: boolean;
+  isPast: boolean;
+  isFuture: boolean;
+}
+
+export function useMissionsByDate(date: string) {
+  return useQuery({
+    queryKey: ['missions', 'by-date', date],
+    queryFn: async () => {
+      const data = await api.get<MissionsByDateResponse>(`/api/missions/by-date?date=${date}`);
+      return data;
+    },
+    staleTime: 30_000,
+  });
+}
+
 export function useCreateMission() {
   const queryClient = useQueryClient();
 
@@ -77,6 +96,7 @@ export function useCreateMission() {
       api.post<{ mission: Mission }>('/api/missions', input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['missions'] });
+      queryClient.invalidateQueries({ queryKey: ['missions', 'by-date'] });
     },
   });
 }
@@ -89,6 +109,7 @@ export function useCompleteMission() {
       api.post<CompleteMissionResponse>(`/api/missions/${id}/complete`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['missions'] });
+      queryClient.invalidateQueries({ queryKey: ['missions', 'by-date'] });
       queryClient.invalidateQueries({ queryKey: ['agent'] });
     },
   });
@@ -101,6 +122,7 @@ export function useDeleteMission() {
     mutationFn: (id: string) => api.del<void>(`/api/missions/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['missions'] });
+      queryClient.invalidateQueries({ queryKey: ['missions', 'by-date'] });
     },
   });
 }
@@ -113,6 +135,7 @@ export function useUpdateMission() {
       api.put<{ mission: Mission }>(`/api/missions/${id}`, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['missions'] });
+      queryClient.invalidateQueries({ queryKey: ['missions', 'by-date'] });
     },
   });
 }
@@ -132,6 +155,7 @@ export function useCreateBatchMissions() {
       api.post<{ created: Mission[]; count: number }>('/api/missions/batch', { missions }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['missions'] });
+      queryClient.invalidateQueries({ queryKey: ['missions', 'by-date'] });
     },
   });
 }

@@ -98,6 +98,13 @@ export async function initializeDatabase(): Promise<void> {
     'ALTER TABLE agent_memory ADD COLUMN character TEXT',
     'ALTER TABLE agent_memory ADD COLUMN message_count INTEGER DEFAULT 0',
     'ALTER TABLE agents ADD COLUMN building_upgrades TEXT DEFAULT \'{}\'',
+    // Phase 1: Combat stats
+    'ALTER TABLE agents ADD COLUMN attack INTEGER DEFAULT 5',
+    'ALTER TABLE agents ADD COLUMN defense INTEGER DEFAULT 3',
+    // Phase 1: Equipment system
+    'ALTER TABLE inventory ADD COLUMN equipped INTEGER DEFAULT 0',
+    'ALTER TABLE inventory ADD COLUMN slot TEXT',
+    'ALTER TABLE inventory ADD COLUMN rarity TEXT DEFAULT \'common\'',
   ];
   for (const stmt of alterColumns) {
     try { await db.run(sql.raw(stmt)); } catch { /* column already exists */ }
@@ -165,6 +172,27 @@ export async function initializeDatabase(): Promise<void> {
       type TEXT,
       data TEXT,
       created_at TEXT
+    )
+  `);
+
+  await db.run(sql`
+    CREATE TABLE IF NOT EXISTS achievements (
+      id TEXT PRIMARY KEY,
+      user_id TEXT REFERENCES users(id),
+      achievement_id TEXT,
+      unlocked_at TEXT
+    )
+  `);
+
+  await db.run(sql`
+    CREATE TABLE IF NOT EXISTS bestiary (
+      id TEXT PRIMARY KEY,
+      user_id TEXT REFERENCES users(id),
+      creature_id TEXT,
+      times_defeated INTEGER DEFAULT 0,
+      times_lost INTEGER DEFAULT 0,
+      first_encountered TEXT,
+      last_encountered TEXT
     )
   `);
 

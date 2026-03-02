@@ -245,6 +245,74 @@ Respond in EXACTLY this JSON format (no markdown, no code fences):
   }
 }
 
+// ── Combat Narration ──────────────────────────────────────────────────
+
+interface CombatTurnForNarration {
+  actor: string;
+  action: string;
+  damage?: number;
+  healing?: number;
+  isCrit?: boolean;
+  message: string;
+}
+
+const COMBAT_TEMPLATES = [
+  (t: CombatTurnForNarration) => t.message,
+  (t: CombatTurnForNarration) => t.isCrit ? `A devastating blow! ${t.message}` : t.message,
+  (t: CombatTurnForNarration) => t.healing ? `Mending wounds... ${t.message}` : t.message,
+];
+
+/** Generate a 1-liner narration for a combat turn. Non-blocking, with template fallback. */
+export async function generateCombatNarrative(
+  turn: CombatTurnForNarration,
+  playerName: string,
+  enemyName: string,
+  apiKey?: string | null,
+): Promise<string> {
+  // Template fallback is fast and reliable
+  const fallback = COMBAT_TEMPLATES[Math.floor(Math.random() * COMBAT_TEMPLATES.length)](turn);
+
+  if (!apiKey) return fallback;
+
+  try {
+    const prompt = `You are a combat narrator for a fantasy RPG game. Write ONE dramatic sentence (max 15 words) for this combat action:
+
+${turn.actor === 'player' ? playerName : enemyName} uses ${turn.action}.${turn.damage ? ` Deals ${turn.damage} damage.` : ''}${turn.healing ? ` Heals ${turn.healing} HP.` : ''}${turn.isCrit ? ' Critical hit!' : ''}
+
+Write only the narrative sentence, no quotes, no explanation.`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(OPENROUTER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://tododo.app',
+        'X-Title': 'Tododo',
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 50,
+        temperature: 0.9,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) return fallback;
+
+    const data = (await response.json()) as OpenRouterResponse;
+    const content = data?.choices?.[0]?.message?.content?.trim();
+    return content || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────
 
 function getFallbackResponse(character: string): string {

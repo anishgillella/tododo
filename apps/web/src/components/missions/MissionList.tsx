@@ -16,6 +16,8 @@ interface MissionListProps {
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   isLoading?: boolean;
+  readOnly?: boolean;
+  canComplete?: boolean;
 }
 
 function SkeletonCard() {
@@ -29,6 +31,8 @@ export function MissionList({
   onComplete,
   onDelete,
   isLoading = false,
+  readOnly,
+  canComplete,
 }: MissionListProps) {
   // Loading state
   if (isLoading) {
@@ -68,6 +72,8 @@ export function MissionList({
             mission={mission}
             onComplete={onComplete}
             onDelete={onDelete}
+            readOnly={readOnly}
+            canComplete={canComplete}
           />
         ))}
       </AnimatePresence>
